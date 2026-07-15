@@ -8,7 +8,7 @@ import {
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { cookies } from "next/headers";
-import { getDb, nowIso } from "@/lib/server/db";
+import { dataDir, getDb, nowIso } from "@/lib/server/db";
 
 export interface User {
   id: string;
@@ -40,7 +40,7 @@ function getSecret(): Buffer {
     cachedSecret = Buffer.from(fromEnv, "utf8");
     return cachedSecret;
   }
-  const dir = join(process.cwd(), "data");
+  const dir = dataDir();
   const file = join(dir, ".session-secret");
   try {
     cachedSecret = readFileSync(file);

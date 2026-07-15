@@ -8,7 +8,18 @@ import { join } from "node:path";
  * Postgres later only means reimplementing the helpers in lib/server/*.
  */
 
-const DATA_DIR = join(process.cwd(), "data");
+/**
+ * Where SQLite and the session secret live. Overridable with
+ * LEGACY_DATA_DIR. On Vercel (and similar read-only serverless
+ * filesystems) we fall back to /tmp so previews run — note that /tmp is
+ * ephemeral there: server-side records reset between cold starts, so
+ * persistent deployments should use the Dockerfile or a hosted database.
+ */
+export function dataDir(): string {
+  if (process.env.LEGACY_DATA_DIR) return process.env.LEGACY_DATA_DIR;
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) return "/tmp/legacy-data";
+  return join(process.cwd(), "data");
+}
 
 declare global {
   // Survive Next.js dev-server hot reloads without reopening handles.
@@ -16,8 +27,9 @@ declare global {
 }
 
 function open(): DatabaseSync {
-  mkdirSync(DATA_DIR, { recursive: true });
-  const db = new DatabaseSync(join(DATA_DIR, "legacy.db"));
+  const dir = dataDir();
+  mkdirSync(dir, { recursive: true });
+  const db = new DatabaseSync(join(dir, "legacy.db"));
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec("PRAGMA foreign_keys = ON;");
   migrate(db);
