@@ -86,6 +86,18 @@ check(
   (await guestbook.textContent())?.includes("Margaret Lewis") ?? false,
 );
 
+// Promise a dish for the repast
+const mealTrain = p1.locator('section[aria-label="The repast table"]');
+await mealTrain.getByLabel("Your name").fill("Margaret Lewis");
+await mealTrain.getByLabel("What you will bring").fill("Chicken pot pie");
+await mealTrain.getByLabel("Serves").fill("12");
+await mealTrain.getByRole("button", { name: "Promise this dish" }).click();
+await mealTrain.getByText(/the table is cared for/).waitFor({ timeout: 15000 });
+check(
+  "dish appears on the repast table",
+  (await mealTrain.textContent())?.includes("Chicken pot pie") ?? false,
+);
+
 // The ICS calendar file downloads
 const ics = await p1.evaluate(async (href) => {
   const res = await fetch(`${href}/service.ics`);
@@ -112,6 +124,7 @@ check("dashboard shows plan", dash?.includes("Eleanor Mae Thompson") ?? false);
 check("dashboard shows coordination reference", dash?.includes(coordRef) ?? false);
 check("dashboard shows memorial guestbook count", dash?.includes("1 condolence") ?? false);
 check("dashboard shows RSVP tally", dash?.includes("3 guests") ?? false);
+check("dashboard shows repast tally", dash?.includes("1 dish promised") ?? false);
 check("dashboard shows order", dash?.includes("The Traditional") ?? false);
 
 // Partner application
@@ -156,6 +169,7 @@ const admin = await p3.locator("main").textContent();
 check("console shows the coordination request", admin?.includes(coordRef) ?? false);
 check("console shows the partner application", admin?.includes(orgName) ?? false);
 check("console shows the outbox", /outbox/i.test(admin ?? ""));
+check("console lists the published memorial", admin?.includes(memorialHref ?? "") ?? false);
 
 await p3.locator('select[name="status"]').first().selectOption("confirmed");
 await p3.getByRole("button", { name: /^Update$/ }).first().click();

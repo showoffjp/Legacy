@@ -18,6 +18,7 @@ import { listOrdersForUser } from "@/lib/server/payments";
 import {
   condolenceCount,
   listMemorialsForOwner,
+  mealSummary,
   rsvpSummary,
 } from "@/lib/server/memorials";
 import type { ServiceKind, ServicePlan } from "@/lib/types";
@@ -202,6 +203,7 @@ export default async function DashboardPage() {
               {memorials.map((memorial) => {
                 const rsvps = rsvpSummary(memorial.slug);
                 const condolences = condolenceCount(memorial.slug);
+                const meals = mealSummary(memorial.slug);
                 return (
                   <Card key={memorial.slug} className="p-6">
                     <div className="flex flex-wrap items-center justify-between gap-4">
@@ -217,6 +219,10 @@ export default async function DashboardPage() {
                           {rsvps.families === 1
                             ? `1 family (${rsvps.guests} ${rsvps.guests === 1 ? "guest" : "guests"}) expected`
                             : `${rsvps.families} families (${rsvps.guests} guests) expected`}
+                          {" · "}
+                          {meals.dishes === 1
+                            ? `1 dish promised for the repast (serves ~${meals.serves})`
+                            : `${meals.dishes} dishes promised for the repast (serves ~${meals.serves})`}
                         </p>
                       </div>
                       <ButtonLink variant="ghost" href={`/memorials/${memorial.slug}`}>

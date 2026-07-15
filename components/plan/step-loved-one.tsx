@@ -45,6 +45,7 @@ async function fileToPortraitDataUrl(file: File): Promise<string> {
 export function StepLovedOne() {
   const { plan, update } = usePlan();
   const d = plan.deceased;
+  const preNeed = plan.mode === "pre-need";
   const fileRef = useRef<HTMLInputElement>(null);
   const [portraitError, setPortraitError] = useState("");
 
@@ -62,6 +63,41 @@ export function StepLovedOne() {
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_260px]">
       <div className="space-y-5">
+        <fieldset>
+          <legend className="mb-3 text-sm font-medium text-ink">Who is this plan for?</legend>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              aria-pressed={!preNeed}
+              onClick={() => update({ mode: "at-need" })}
+              className={`rounded-2xl border bg-white/80 p-4 text-left shadow-soft transition-all ${
+                !preNeed ? "border-gold ring-2 ring-gold-pale" : "border-line hover:shadow-lift"
+              }`}
+            >
+              <span className="block text-sm font-medium text-ink">A loved one who has passed</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-ink-soft">
+                We will walk with you through every arrangement, at your pace.
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={preNeed}
+              onClick={() => update({ mode: "pre-need" })}
+              className={`rounded-2xl border bg-white/80 p-4 text-left shadow-soft transition-all ${
+                preNeed ? "border-gold ring-2 ring-gold-pale" : "border-line hover:shadow-lift"
+              }`}
+            >
+              <span className="block text-sm font-medium text-ink">
+                Planning ahead — recording wishes
+              </span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-ink-soft">
+                For yourself or someone still with us — a gift of clarity for the family, kept
+                until it is needed.
+              </span>
+            </button>
+          </div>
+        </fieldset>
+
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Full name" hint="As it should appear on the program and memorial.">
             <input
@@ -92,14 +128,16 @@ export function StepLovedOne() {
               onChange={(e) => update({ deceased: { birthDate: e.target.value } })}
             />
           </Field>
-          <Field label="Date of passing">
-            <input
-              type="date"
-              className={inputCls}
-              value={d.deathDate}
-              onChange={(e) => update({ deceased: { deathDate: e.target.value } })}
-            />
-          </Field>
+          {preNeed ? null : (
+            <Field label="Date of passing">
+              <input
+                type="date"
+                className={inputCls}
+                value={d.deathDate}
+                onChange={(e) => update({ deceased: { deathDate: e.target.value } })}
+              />
+            </Field>
+          )}
         </div>
 
         <Field
@@ -123,8 +161,12 @@ export function StepLovedOne() {
         </Field>
 
         <Field
-          label="Their life, in your words"
-          hint="A few lines or a whole story — this becomes the heart of the obituary and program. What did they love? How did they live their faith? What will you miss most?"
+          label={preNeed ? "Their life, in their words" : "Their life, in your words"}
+          hint={
+            preNeed
+              ? "Written now, in peace — the story they want told: what they love, how they live their faith, what they hope the family remembers."
+              : "A few lines or a whole story — this becomes the heart of the obituary and program. What did they love? How did they live their faith? What will you miss most?"
+          }
         >
           <textarea
             className={`${inputCls} min-h-36 resize-y`}

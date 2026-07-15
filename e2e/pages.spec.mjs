@@ -6,6 +6,8 @@ const PAGES = [
   ["/plan", "Planning a faithful farewell"],
   ["/plan/program", "The Order of Service Program"],
   ["/plan/obituary", "The Obituary"],
+  ["/plan/wishes", "The Letter of Wishes"],
+  ["/plan/cards", "Acknowledgment Cards"],
   ["/tribute", "Their life, in light and song"],
   ["/memorials", "Lives written in the Book of Life"],
   ["/memorials/eleanor-mae-thompson", "In Loving Memory of"],

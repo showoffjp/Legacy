@@ -8,6 +8,8 @@ const FOOTER_LINKS = [
       { href: "/plan", label: "Plan a Service" },
       { href: "/plan/program", label: "Service Program" },
       { href: "/plan/obituary", label: "The Obituary" },
+      { href: "/plan/wishes", label: "Letter of Wishes" },
+      { href: "/plan/cards", label: "Acknowledgment Cards" },
       { href: "/pricing", label: "Packages & Pricing" },
       { href: "/checklist", label: "Bereavement Checklist" },
     ],

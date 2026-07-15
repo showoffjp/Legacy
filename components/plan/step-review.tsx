@@ -28,6 +28,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 export function StepReview() {
   const { plan, reset } = usePlan();
+  const preNeed = plan.mode === "pre-need";
   const [reference, setReference] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
@@ -166,20 +167,31 @@ export function StepReview() {
       </div>
 
       <section className="rounded-2xl bg-night p-8 text-parchment">
-        <h3 className="font-display text-2xl font-semibold">Bring the farewell to life</h3>
+        <h3 className="font-display text-2xl font-semibold">
+          {preNeed ? "A gift of clarity for your family" : "Bring the farewell to life"}
+        </h3>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-parchment/70">
-          Your plan flows into everything below — the printed program for every guest, the tribute
-          film for the service, and a lasting memorial page.
+          {preNeed
+            ? "These wishes flow into everything below — print the Letter of Wishes, sign it, and keep it with your important documents. When the day comes, the family opens this plan and every hard decision is already made with love."
+            : "Your plan flows into everything below — the printed program for every guest, the tribute film for the service, and a lasting memorial page."}
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <ButtonLink href="/plan/program">📖 Preview & print the program</ButtonLink>
+          {preNeed ? (
+            <ButtonLink href="/plan/wishes">📜 Print the Letter of Wishes</ButtonLink>
+          ) : null}
+          <ButtonLink href="/plan/program" variant={preNeed ? "outline-inverse" : "primary"}>
+            📖 Preview & print the program
+          </ButtonLink>
           <ButtonLink href="/plan/obituary" variant="outline-inverse">
             📰 The obituary
+          </ButtonLink>
+          <ButtonLink href="/plan/cards" variant="outline-inverse">
+            💌 Acknowledgment cards
           </ButtonLink>
           <ButtonLink href="/tribute" variant="outline-inverse">
             🎞️ Create the tribute video
           </ButtonLink>
-          {memorialSlug ? (
+          {preNeed ? null : memorialSlug ? (
             <ButtonLink href={`/memorials/${memorialSlug}`} variant="outline-inverse">
               🌹 Visit their memorial page
             </ButtonLink>
@@ -230,12 +242,14 @@ export function StepReview() {
         ) : (
           <form onSubmit={submitCoordination}>
             <h3 className="font-display text-2xl font-semibold text-ink">
-              Ready to place this in trusted hands?
+              {preNeed
+                ? "Place these wishes in our safekeeping"
+                : "Ready to place this in trusted hands?"}
             </h3>
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-soft">
-              We send the complete plan to {home ? home.name : "your chosen funeral home"} and
-              {minister ? ` ${minister.name}` : " your chosen minister"}, confirm every detail, and
-              stay beside your family until the last guest goes home. Tell us how to reach you:
+              {preNeed
+                ? "We keep the wishes on file with our coordinators — nothing is set in motion, and nothing is owed, until your family calls on us. Tell us how to reach you:"
+                : `We send the complete plan to ${home ? home.name : "your chosen funeral home"} and ${minister ? minister.name : "your chosen minister"}, confirm every detail, and stay beside your family until the last guest goes home. Tell us how to reach you:`}
             </p>
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
               <Field label="Your name">

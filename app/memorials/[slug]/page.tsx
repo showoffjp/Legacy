@@ -7,8 +7,10 @@ import type { Hymn, Memorial } from "@/lib/types";
 import {
   getPublishedMemorial,
   listCondolences,
+  listMealOffers,
   type PublishedMemorial,
 } from "@/lib/server/memorials";
+import { MealTrain } from "@/components/memorials/meal-train";
 import { Card, Container, SectionHeading, VerseBlock, formatLongDate } from "@/components/ui";
 import { Guestbook } from "@/components/memorials/guestbook";
 import { ServerGuestbook } from "@/components/memorials/server-guestbook";
@@ -219,6 +221,12 @@ function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial }) {
     message: c.message,
     createdAt: c.created_at,
   }));
+  const mealOffers = listMealOffers(memorial.slug).map((m) => ({
+    id: m.id,
+    name: m.name,
+    dish: m.dish,
+    serves: m.serves,
+  }));
 
   return (
     <>
@@ -314,6 +322,9 @@ function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial }) {
           </section>
         ) : null}
 
+        {hasServiceDetails ? (
+          <MealTrain slug={memorial.slug} initialOffers={mealOffers} />
+        ) : null}
         <StorySection story={d.story} />
         <HymnsSection hymns={hymns} />
         <SurvivedBySection text={d.survivedBy} />

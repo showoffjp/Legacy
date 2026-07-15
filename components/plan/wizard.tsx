@@ -124,7 +124,9 @@ export function PlanWizard() {
           </span>
           <h1 className="mt-3 font-display text-4xl font-medium text-ink sm:text-5xl">
             {plan.deceased.fullName
-              ? `A farewell for ${plan.deceased.fullName}`
+              ? plan.mode === "pre-need"
+                ? `A plan of wishes for ${plan.deceased.fullName}`
+                : `A farewell for ${plan.deceased.fullName}`
               : "Planning a faithful farewell"}
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">

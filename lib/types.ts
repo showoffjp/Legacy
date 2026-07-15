@@ -138,8 +138,15 @@ export interface Condolence {
   createdAt: string;
 }
 
+/**
+ * At-need: a loved one has passed and the family is arranging the farewell.
+ * Pre-need: someone is lovingly planning ahead and recording their wishes.
+ */
+export type PlanMode = "at-need" | "pre-need";
+
 /** The living document a family builds through the planning wizard. */
 export interface ServicePlan {
+  mode: PlanMode;
   deceased: {
     fullName: string;
     nickname: string;
@@ -177,6 +184,7 @@ export interface ServicePlan {
 }
 
 export const EMPTY_PLAN: ServicePlan = {
+  mode: "at-need",
   deceased: {
     fullName: "",
     nickname: "",

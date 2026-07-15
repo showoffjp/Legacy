@@ -122,6 +122,16 @@ function migrate(db: DatabaseSync): void {
       created_at    TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS meal_offers (
+      id            TEXT PRIMARY KEY,
+      memorial_slug TEXT NOT NULL REFERENCES memorials(slug) ON DELETE CASCADE,
+      name          TEXT NOT NULL,
+      dish          TEXT NOT NULL,
+      serves        INTEGER NOT NULL DEFAULT 8,
+      note          TEXT NOT NULL DEFAULT '',
+      created_at    TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS messages (
       id           TEXT PRIMARY KEY,
       channel      TEXT NOT NULL,

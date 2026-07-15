@@ -26,6 +26,13 @@ trusted local providers, and turns every choice into beautiful keepsakes.
   the little things everyone remembers, the hymns they loved, and a condolence guestbook.
 - **Bereavement checklist** (`/checklist`) — everything that must be done from the first hours to
   the first months, with progress saved locally.
+- **Pre-planning, "My Wishes"** (`/plan/wishes`) — choose "Planning ahead" in the wizard to record
+  wishes for yourself or a loved one still living; every choice gathers into a printable,
+  signable Letter of Wishes kept with your important documents.
+- **More printouts** — a generated obituary with copy-ready newspaper text (`/plan/obituary`) and
+  matching acknowledgment cards, four to a sheet (`/plan/cards`).
+- **The Repast Table** — on published memorials, church family promises dishes for the meal after
+  the service; the family's dashboard tallies dishes and servings alongside RSVPs.
 - **Grief resources** (`/resources`) — scriptures of comfort, prayers, pastoral guidance, and
   Christ-centered support groups.
 - **Honest pricing & checkout** (`/pricing`, `/checkout`) — three transparent packages plus à la
@@ -47,7 +54,22 @@ trusted local providers, and turns every choice into beautiful keepsakes.
 npm install
 npm run dev      # http://localhost:3000
 npm run build    # production build
+npm run e2e      # full Playwright end-to-end suite (starts the server itself)
 ```
+
+## Deploying
+
+The app needs a Node server with a writable disk for SQLite (`./data`) — any VM, VPS, Fly.io,
+Railway, or Render service works. A production `Dockerfile` is included:
+
+```bash
+docker build -t legacy .
+docker run -p 3000:3000 -v legacy-data:/app/data \
+  -e LEGACY_SECRET=<long-random-string> -e COOKIE_SECURE=1 legacy
+```
+
+(Serverless platforms without persistent disk need the data layer in `lib/server/` pointed at a
+hosted database first — the helpers are the only thing to swap.)
 
 Built with Next.js 15 (App Router), React 19, TypeScript, and Tailwind CSS v4. Server data lives
 in SQLite via Node's built-in `node:sqlite` (no native dependencies) in the gitignored `./data`

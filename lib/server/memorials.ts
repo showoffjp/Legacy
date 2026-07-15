@@ -172,6 +172,13 @@ export function listMemorialsForOwner(ownerId: string): PublishedMemorial[] {
   return rows.map(rowToMemorial).filter((m): m is PublishedMemorial => m !== null);
 }
 
+/** Coordinator moderation: hide a published memorial (content is retained). */
+export function unpublishMemorial(slug: string): void {
+  getDb()
+    .prepare("UPDATE memorials SET published = 0, updated_at = ? WHERE slug = ?")
+    .run(nowIso(), slug);
+}
+
 /* ——— Condolences ——— */
 
 export function addCondolence(slug: string, name: string, message: string): CondolenceRow {
@@ -226,6 +233,59 @@ export function rsvpSummary(slug: string): { families: number; guests: number } 
     )
     .get(slug) as unknown as { families: number; guests: number };
   return { families: row.families, guests: row.guests };
+}
+
+/* ——— The repast table (meal sign-up) ——— */
+
+export interface MealOfferRow {
+  id: string;
+  memorial_slug: string;
+  name: string;
+  dish: string;
+  serves: number;
+  note: string;
+  created_at: string;
+}
+
+export function addMealOffer(input: {
+  slug: string;
+  name: string;
+  dish: string;
+  serves: number;
+  note: string;
+}): MealOfferRow {
+  const id = randomUUID();
+  const now = nowIso();
+  const serves = Math.max(1, Math.min(100, Math.round(input.serves)));
+  getDb()
+    .prepare(
+      "INSERT INTO meal_offers (id, memorial_slug, name, dish, serves, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    )
+    .run(id, input.slug, input.name, input.dish, serves, input.note, now);
+  return {
+    id,
+    memorial_slug: input.slug,
+    name: input.name,
+    dish: input.dish,
+    serves,
+    note: input.note,
+    created_at: now,
+  };
+}
+
+export function listMealOffers(slug: string): MealOfferRow[] {
+  return getDb()
+    .prepare("SELECT * FROM meal_offers WHERE memorial_slug = ? ORDER BY created_at ASC")
+    .all(slug) as unknown as MealOfferRow[];
+}
+
+export function mealSummary(slug: string): { dishes: number; serves: number } {
+  const row = getDb()
+    .prepare(
+      "SELECT COUNT(*) AS dishes, COALESCE(SUM(serves), 0) AS serves FROM meal_offers WHERE memorial_slug = ?",
+    )
+    .get(slug) as unknown as { dishes: number; serves: number };
+  return { dishes: row.dishes, serves: row.serves };
 }
 
 export function condolenceCount(slug: string): number {

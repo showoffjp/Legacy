@@ -2,7 +2,17 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { updateApplicationStatus, updateRequestStatus } from "@/app/admin/actions";
+import {
+  unpublishMemorialAction,
+  updateApplicationStatus,
+  updateRequestStatus,
+} from "@/app/admin/actions";
+import {
+  condolenceCount,
+  listPublishedMemorials,
+  mealSummary,
+  rsvpSummary,
+} from "@/lib/server/memorials";
 import { categoryLabel } from "@/components/partners/categories";
 import { Badge, Button, Card, Container, formatLongDate, formatUsd } from "@/components/ui";
 import { clergyById } from "@/lib/data/clergy";
@@ -398,6 +408,7 @@ export default async function AdminPage() {
   const applications = listPartnerApplications();
   const orders = listOrders();
   const messages = listMessages();
+  const memorials = listPublishedMemorials();
 
   const openRequests = requests.filter((r) => r.status !== "completed").length;
 
@@ -457,6 +468,50 @@ export default async function AdminPage() {
             </EmptyState>
           ) : (
             orders.map((order) => <OrderCard key={order.id} order={order} />)
+          )}
+        </ConsoleSection>
+
+        <ConsoleSection
+          title="Published memorials"
+          count={pluralize(memorials.length, "memorial")}
+          note="Every family-published page of remembrance. Unpublishing hides a page without deleting its guestbook or RSVPs."
+        >
+          {memorials.length === 0 ? (
+            <EmptyState>
+              No published memorials yet. When a family publishes a page of remembrance from
+              their plan, it appears here.
+            </EmptyState>
+          ) : (
+            memorials.map((memorial) => {
+              const rsvps = rsvpSummary(memorial.slug);
+              const meals = mealSummary(memorial.slug);
+              const condolences = condolenceCount(memorial.slug);
+              return (
+                <Card key={memorial.slug} className="p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <a
+                        href={`/memorials/${memorial.slug}`}
+                        className="font-display text-xl font-medium text-ink underline-offset-4 hover:underline"
+                      >
+                        {memorial.data.fullName}
+                      </a>
+                      <p className="mt-1 text-sm text-ink-faint">
+                        /memorials/{memorial.slug} · {pluralize(condolences, "condolence")} ·{" "}
+                        {rsvps.guests} guests expected · {pluralize(meals.dishes, "dish")}{" "}
+                        promised
+                      </p>
+                    </div>
+                    <form action={unpublishMemorialAction}>
+                      <input type="hidden" name="slug" value={memorial.slug} />
+                      <Button type="submit" variant="outline">
+                        Unpublish
+                      </Button>
+                    </form>
+                  </div>
+                </Card>
+              );
+            })
           )}
         </ConsoleSection>
 

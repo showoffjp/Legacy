@@ -9,6 +9,7 @@ const BASE = process.env.E2E_BASE_URL || "http://localhost:3000";
 const SPECS = [
   "pages.spec.mjs",
   "plan-program.spec.mjs",
+  "wishes.spec.mjs",
   "tribute.spec.mjs",
   "lifecycle.spec.mjs",
 ];
