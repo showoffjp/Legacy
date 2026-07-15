@@ -79,31 +79,40 @@ const STEPS = [
 export default function HomePage() {
   return (
     <>
-      {/* Hero */}
+      {/* Hero — ambient candlelight-at-dawn glows drift slowly behind the words */}
       <section className="relative overflow-hidden bg-night text-parchment">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.35]"
-          style={{
-            background:
-              "radial-gradient(60rem 30rem at 50% -8rem, rgba(163,131,63,0.45), transparent 65%), radial-gradient(40rem 24rem at 85% 110%, rgba(111,127,106,0.35), transparent 60%)",
-          }}
-        />
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="hero-glow hero-glow-gold" />
+          <div className="hero-glow hero-glow-sage" />
+          <div className="hero-glow hero-glow-ember" />
+        </div>
         <Container className="relative flex flex-col items-center py-24 text-center sm:py-32">
-          <span className="ornament text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-gold-pale">
+          <span
+            className="ornament hero-rise text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-gold-pale"
+            style={{ animationDelay: "0.05s" }}
+          >
             A Christian companion in life&apos;s hardest hour
           </span>
-          <h1 className="mt-6 max-w-4xl font-display text-5xl font-medium leading-[1.08] sm:text-7xl">
+          <h1
+            className="hero-rise mt-6 max-w-4xl font-display text-5xl font-medium leading-[1.08] sm:text-7xl"
+            style={{ animationDelay: "0.18s" }}
+          >
             When words fail and grief is heavy,
             <span className="italic text-gold-pale"> we carry the details.</span>
           </h1>
-          <p className="mt-7 max-w-2xl text-base leading-relaxed text-parchment/75 sm:text-lg">
+          <p
+            className="hero-rise mt-7 max-w-2xl text-base leading-relaxed text-parchment/75 sm:text-lg"
+            style={{ animationDelay: "0.34s" }}
+          >
             Legacy walks with your family through everything a farewell asks — coordinating the
             funeral home, booking the priest or pastor, choosing the casket and the flowers,
             printing the programs, and weaving their photographs and favorite songs into a tribute
             that captures who they truly were.
           </p>
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+          <div
+            className="hero-rise mt-10 flex flex-col gap-3 sm:flex-row"
+            style={{ animationDelay: "0.5s" }}
+          >
             <ButtonLink href="/plan" className="px-8 py-3.5 text-base">
               Begin Planning a Service
             </ButtonLink>
@@ -115,7 +124,10 @@ export default function HomePage() {
               Someone just passed — what do I do?
             </ButtonLink>
           </div>
-          <p className="mt-8 text-sm text-parchment/50">
+          <p
+            className="hero-rise mt-8 text-sm text-parchment/50"
+            style={{ animationDelay: "0.66s" }}
+          >
             Here day and night. Grief does not keep office hours, and neither do we.
           </p>
         </Container>

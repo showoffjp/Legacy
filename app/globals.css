@@ -55,6 +55,116 @@ body {
   opacity: 0.6;
 }
 
+/* ————— Hero ambience: candlelight-at-dawn glows + gentle text rise ————— */
+
+.hero-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(72px);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.hero-glow-gold {
+  width: 76rem;
+  height: 38rem;
+  left: 50%;
+  top: -13rem;
+  margin-left: -38rem;
+  background: radial-gradient(closest-side, rgba(163, 131, 63, 0.55), rgba(163, 131, 63, 0.18) 45%, transparent 76%);
+  opacity: 0.95;
+}
+
+.hero-glow-sage {
+  width: 50rem;
+  height: 28rem;
+  right: -16rem;
+  bottom: -11rem;
+  background: radial-gradient(closest-side, rgba(111, 127, 106, 0.4), rgba(111, 127, 106, 0.12) 50%, transparent 78%);
+  opacity: 0.85;
+}
+
+.hero-glow-ember {
+  width: 34rem;
+  height: 22rem;
+  left: -12rem;
+  top: 38%;
+  background: radial-gradient(closest-side, rgba(236, 223, 194, 0.12), rgba(236, 223, 194, 0.04) 50%, transparent 78%);
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes glow-drift-gold {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+      opacity: 0.85;
+    }
+    50% {
+      transform: translate3d(4rem, 1.5rem, 0) scale(1.12);
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(-3rem, -1rem, 0) scale(0.97);
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes glow-drift-sage {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+      opacity: 0.65;
+    }
+    50% {
+      transform: translate3d(-5rem, -2rem, 0) scale(1.15);
+      opacity: 0.95;
+    }
+    100% {
+      transform: translate3d(2rem, 1rem, 0) scale(1);
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes glow-drift-ember {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+      opacity: 0.45;
+    }
+    50% {
+      transform: translate3d(3rem, -2.5rem, 0) scale(1.2);
+      opacity: 0.85;
+    }
+    100% {
+      transform: translate3d(-1.5rem, 1rem, 0) scale(0.95);
+      opacity: 0.5;
+    }
+  }
+
+  .hero-glow-gold {
+    animation: glow-drift-gold 26s ease-in-out infinite alternate;
+  }
+  .hero-glow-sage {
+    animation: glow-drift-sage 34s ease-in-out infinite alternate;
+  }
+  .hero-glow-ember {
+    animation: glow-drift-ember 42s ease-in-out infinite alternate;
+  }
+
+  @keyframes hero-rise {
+    from {
+      opacity: 0;
+      transform: translateY(1.1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .hero-rise {
+    animation: hero-rise 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+}
+
 /* ————— Print styles for the order-of-service program ————— */
 @media print {
   @page {
