@@ -104,7 +104,7 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 <ButtonLink
-                  href="/plan"
+                  href={`/checkout?package=${pkg.id}`}
                   variant={pkg.highlighted ? "primary" : "outline"}
                   className="mt-8 w-full"
                 >

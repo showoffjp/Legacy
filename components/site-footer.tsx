@@ -26,6 +26,7 @@ const FOOTER_LINKS = [
       { href: "/directory?tab=clergy", label: "Pastors & Priests" },
       { href: "/directory?tab=florists", label: "Florists" },
       { href: "/directory?tab=providers", label: "Caskets & More" },
+      { href: "/partners", label: "Partner with Us" },
     ],
   },
 ];

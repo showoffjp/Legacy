@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+interface NavUser {
+  name: string;
+  role: "family" | "coordinator";
+}
 
 const LINKS = [
   { href: "/plan", label: "Plan a Service" },
@@ -17,6 +22,17 @@ const LINKS = [
 export function SiteNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<NavUser | null>(null);
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { user: NavUser | null } | null) => setUser(body?.user ?? null))
+      .catch(() => {});
+  }, [pathname]);
+
+  const accountHref = user ? (user.role === "coordinator" ? "/admin" : "/account/dashboard") : "/account";
+  const accountLabel = user ? (user.role === "coordinator" ? "Console" : "My Family") : "Sign in";
 
   return (
     <header className="no-print sticky top-0 z-50 border-b border-line bg-parchment/90 backdrop-blur">
@@ -50,6 +66,12 @@ export function SiteNav() {
 
         <div className="flex items-center gap-3">
           <Link
+            href={accountHref}
+            className="hidden rounded-full px-3.5 py-2 text-[0.83rem] font-medium text-ink-soft transition-colors hover:bg-white hover:text-ink md:inline-flex"
+          >
+            {accountLabel}
+          </Link>
+          <Link
             href="/plan"
             className="hidden rounded-full bg-ink px-5 py-2.5 text-[0.83rem] font-medium text-parchment transition-colors hover:bg-night sm:inline-flex"
           >
@@ -80,6 +102,15 @@ export function SiteNav() {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link
+                href={accountHref}
+                onClick={() => setOpen(false)}
+                className="block rounded-xl px-4 py-3 text-sm font-medium text-ink-soft hover:bg-white hover:text-ink"
+              >
+                {accountLabel}
+              </Link>
+            </li>
             <li>
               <Link
                 href="/plan"

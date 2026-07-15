@@ -97,7 +97,7 @@ const STEPS: StepDef[] = [
 ];
 
 export function PlanWizard() {
-  const { plan, ready } = usePlan();
+  const { plan, ready, cloud } = usePlan();
   const [stepIndex, setStepIndex] = useState(0);
 
   // Return visitors resume at the first unfinished step.
@@ -128,8 +128,9 @@ export function PlanWizard() {
               : "Planning a faithful farewell"}
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">
-            Your plan is saved on this device as you go. Move at your own pace — you can leave and
-            return at any time, and nothing is ever lost.
+            {cloud
+              ? "Your plan is saved to your account as you go — open it from any device, or let family carry it with you."
+              : "Your plan is saved on this device as you go. Move at your own pace — you can leave and return at any time, and nothing is ever lost."}
           </p>
         </Container>
       </section>

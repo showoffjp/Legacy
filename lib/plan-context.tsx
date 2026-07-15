@@ -21,6 +21,8 @@ interface PlanContextValue {
   plan: ServicePlan;
   /** True once the plan has been loaded from localStorage. */
   ready: boolean;
+  /** True when the visitor is signed in and the plan also syncs to their account. */
+  cloud: boolean;
   update: (patch: DeepPartial<ServicePlan>) => void;
   reset: () => void;
 }
@@ -46,20 +48,66 @@ function mergePlan(base: ServicePlan, patch: DeepPartial<ServicePlan>): ServiceP
 export function PlanProvider({ children }: { children: ReactNode }) {
   const [plan, setPlan] = useState<ServicePlan>(EMPTY_PLAN);
   const [ready, setReady] = useState(false);
+  const [cloud, setCloud] = useState(false);
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingPlan = useRef<ServicePlan | null>(null);
+  const cloudRef = useRef(false);
+  const cloudTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    let local: ServicePlan | null = null;
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as DeepPartial<ServicePlan>;
-        setPlan(mergePlan(EMPTY_PLAN, parsed));
+        local = mergePlan(EMPTY_PLAN, parsed);
+        // mergePlan stamps updatedAt "now"; keep the stored timestamp for
+        // honest comparison against the account copy.
+        if (typeof parsed.updatedAt === "string") local.updatedAt = parsed.updatedAt;
+        setPlan(local);
       }
     } catch {
       // Corrupt or unavailable storage — begin with a fresh plan.
     }
     setReady(true);
+
+    // Reconcile with the signed-in account copy, if any. Newer wins.
+    (async () => {
+      try {
+        const me = await fetch("/api/me");
+        if (!me.ok) return;
+        const { user } = (await me.json()) as { user: { id: string } | null };
+        if (!user) return; // planning anonymously — the device copy is the plan
+        const res = await fetch("/api/plan");
+        if (!res.ok) return;
+        cloudRef.current = true;
+        setCloud(true);
+        const body = (await res.json()) as {
+          plan: DeepPartial<ServicePlan> | null;
+          updatedAt: string | null;
+        };
+        const localStamp = local?.updatedAt ?? "";
+        const serverStamp = body.updatedAt ?? "";
+        if (body.plan && serverStamp > localStamp) {
+          const fromServer = mergePlan(EMPTY_PLAN, body.plan);
+          fromServer.updatedAt = serverStamp;
+          setPlan(fromServer);
+          try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fromServer));
+          } catch {
+            // keep in memory
+          }
+        } else if (local && local.deceased.fullName && localStamp > serverStamp) {
+          void fetch("/api/plan", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: local }),
+          });
+        }
+      } catch {
+        // Offline or server unavailable — the device copy carries on alone.
+      }
+    })();
   }, []);
 
   // If the tab closes or is backgrounded before the debounce fires, flush
@@ -96,6 +144,18 @@ export function PlanProvider({ children }: { children: ReactNode }) {
         // Storage may be full (e.g. large portrait) or blocked; keep in memory.
       }
     }, 250);
+
+    // Mirror to the account copy a beat later, when signed in.
+    if (cloudRef.current) {
+      if (cloudTimer.current) clearTimeout(cloudTimer.current);
+      cloudTimer.current = setTimeout(() => {
+        void fetch("/api/plan", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: next }),
+        }).catch(() => {});
+      }, 1500);
+    }
   }, []);
 
   const update = useCallback(
@@ -113,15 +173,23 @@ export function PlanProvider({ children }: { children: ReactNode }) {
     setPlan(EMPTY_PLAN);
     pendingPlan.current = null;
     if (persistTimer.current) clearTimeout(persistTimer.current);
+    if (cloudTimer.current) clearTimeout(cloudTimer.current);
     try {
       window.localStorage.removeItem(STORAGE_KEY);
     } catch {
       // ignore
     }
+    if (cloudRef.current) {
+      void fetch("/api/plan", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: EMPTY_PLAN }),
+      }).catch(() => {});
+    }
   }, []);
 
   return (
-    <PlanContext.Provider value={{ plan, ready, update, reset }}>
+    <PlanContext.Provider value={{ plan, ready, cloud, update, reset }}>
       {children}
     </PlanContext.Provider>
   );

@@ -1,6 +1,9 @@
 # dependencies
 /node_modules
 
+# local database & secrets
+/data
+
 # next.js
 /.next/
 /out/

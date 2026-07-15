@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ButtonLink, formatLongDate, formatUsd } from "@/components/ui";
+import { useState, type FormEvent } from "react";
+import { ButtonLink, Field, formatLongDate, formatUsd, inputCls } from "@/components/ui";
 import { usePlan } from "@/lib/plan-context";
 import { funeralHomeById } from "@/lib/data/funeral-homes";
 import { clergyById } from "@/lib/data/clergy";
@@ -28,7 +28,37 @@ function Row({ label, value }: { label: string; value: string }) {
 
 export function StepReview() {
   const { plan, reset } = usePlan();
-  const [sent, setSent] = useState(false);
+  const [reference, setReference] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
+  const [contact, setContact] = useState({ name: "", email: "", phone: "", notes: "" });
+
+  async function submitCoordination(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSending(true);
+    setSendError("");
+    try {
+      const res = await fetch("/api/coordination", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan,
+          contact: { name: contact.name, email: contact.email, phone: contact.phone },
+          notes: contact.notes,
+        }),
+      });
+      const body = (await res.json()) as { reference?: string; error?: string };
+      if (!res.ok || !body.reference) {
+        setSendError(body.error || "Something went wrong — please try again in a moment.");
+      } else {
+        setReference(body.reference);
+      }
+    } catch {
+      setSendError("We could not reach the server — please check your connection and try again.");
+    } finally {
+      setSending(false);
+    }
+  }
 
   const home = funeralHomeById(plan.funeralHomeId);
   const minister = clergyById(plan.clergyId);
@@ -125,42 +155,88 @@ export function StepReview() {
       </section>
 
       <section className="rounded-2xl border border-line bg-white/80 p-8 shadow-soft">
-        {sent ? (
+        {reference ? (
           <div className="text-center">
             <span aria-hidden className="text-3xl">🕊️</span>
             <h3 className="mt-3 font-display text-2xl font-semibold text-ink">
-              Your plan is on its way
+              Your plan is in our hands — reference {reference}
             </h3>
             <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
               {home
-                ? `${home.name} will receive every detail of this plan, and a Legacy coordinator will call you shortly to walk through the next steps together.`
-                : "A Legacy coordinator will call you shortly to walk through the next steps together."}{" "}
-              Nothing is final until your family says so.
+                ? `${home.name} is being notified with every detail of this plan, `
+                : "Our coordinators have every detail of this plan, "}
+              {minister ? `${minister.name} has been asked to lead the service, ` : ""}
+              and a confirmation is on its way to {contact.email}. A Legacy coordinator will call
+              you shortly — nothing is final until your family says so.
             </p>
             <p className="mt-4 text-xs text-ink-faint">
-              (Demonstration only — no information was sent from this preview build.)
+              Keep your reference close: {reference}. Signed-in families can follow its progress on
+              their dashboard.
             </p>
           </div>
         ) : (
-          <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
-            <div>
-              <h3 className="font-display text-2xl font-semibold text-ink">
-                Ready to place this in trusted hands?
-              </h3>
-              <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink-soft">
-                We send the complete plan to {home ? home.name : "your chosen funeral home"} and
-                {minister ? ` ${minister.name}` : " your chosen minister"}, confirm every detail,
-                and stay beside your family until the last guest goes home.
-              </p>
+          <form onSubmit={submitCoordination}>
+            <h3 className="font-display text-2xl font-semibold text-ink">
+              Ready to place this in trusted hands?
+            </h3>
+            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-soft">
+              We send the complete plan to {home ? home.name : "your chosen funeral home"} and
+              {minister ? ` ${minister.name}` : " your chosen minister"}, confirm every detail, and
+              stay beside your family until the last guest goes home. Tell us how to reach you:
+            </p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              <Field label="Your name">
+                <input
+                  className={inputCls}
+                  required
+                  value={contact.name}
+                  onChange={(e) => setContact((c) => ({ ...c, name: e.target.value }))}
+                  placeholder="Ruth Callahan"
+                />
+              </Field>
+              <Field label="Email">
+                <input
+                  className={inputCls}
+                  type="email"
+                  required
+                  value={contact.email}
+                  onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
+                  placeholder="ruth@example.com"
+                />
+              </Field>
+              <Field label="Phone (optional)">
+                <input
+                  className={inputCls}
+                  type="tel"
+                  value={contact.phone}
+                  onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))}
+                  placeholder="(615) 555-0123"
+                />
+              </Field>
             </div>
+            <div className="mt-4">
+              <Field label="Anything our coordinator should know? (optional)">
+                <textarea
+                  className={`${inputCls} min-h-20 resize-y`}
+                  value={contact.notes}
+                  onChange={(e) => setContact((c) => ({ ...c, notes: e.target.value }))}
+                  placeholder="We are hoping to hold the service on Saturday so family can travel."
+                />
+              </Field>
+            </div>
+            {sendError ? (
+              <p role="alert" className="mt-3 text-sm text-red-700">
+                {sendError}
+              </p>
+            ) : null}
             <button
-              type="button"
-              onClick={() => setSent(true)}
-              className="shrink-0 rounded-full bg-gold px-7 py-3 text-sm font-medium text-white shadow-soft transition-colors hover:bg-gold-deep"
+              type="submit"
+              disabled={sending}
+              className="mt-5 rounded-full bg-gold px-7 py-3 text-sm font-medium text-white shadow-soft transition-colors hover:bg-gold-deep disabled:opacity-60"
             >
-              Send to our coordinator
+              {sending ? "Sending your plan…" : "Send to our coordinator"}
             </button>
-          </div>
+          </form>
         )}
       </section>
 

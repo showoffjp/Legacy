@@ -28,8 +28,18 @@ trusted local providers, and turns every choice into beautiful keepsakes.
   the first months, with progress saved locally.
 - **Grief resources** (`/resources`) — scriptures of comfort, prayers, pastoral guidance, and
   Christ-centered support groups.
-- **Honest pricing** (`/pricing`) — three transparent packages plus à la carte services, honoring
-  the FTC Funeral Rule.
+- **Honest pricing & checkout** (`/pricing`, `/checkout`) — three transparent packages plus à la
+  carte services, honoring the FTC Funeral Rule, with an order flow built behind a pluggable
+  payment-provider interface (demo provider included; Stripe slots in via the same interface).
+- **Family accounts** (`/account`) — optional sign-in that keeps the plan safely synced to the
+  server (newer copy wins, device copy always works offline) and shows coordination requests and
+  orders on a family dashboard.
+- **Real coordination** — sending a plan from the review step records a coordination request and
+  queues messages to the funeral home, the minister, and the family (email + SMS outbox).
+- **Partner onboarding** (`/partners`) — funeral homes, clergy, florists, and providers apply to
+  join the vetted network.
+- **Coordinator console** (`/admin`) — coordinators see every request (with the full plan),
+  partner applications, orders, and the message outbox, and update statuses inline.
 
 ## Running locally
 
@@ -39,11 +49,23 @@ npm run dev      # http://localhost:3000
 npm run build    # production build
 ```
 
-Built with Next.js 15 (App Router), React 19, TypeScript, and Tailwind CSS v4.
+Built with Next.js 15 (App Router), React 19, TypeScript, and Tailwind CSS v4. Server data lives
+in SQLite via Node's built-in `node:sqlite` (no native dependencies) in the gitignored `./data`
+directory; sessions are scrypt-hashed passwords with HMAC-signed cookies.
+
+## Demo accounts & configuration
+
+- The coordinator console (`/admin`) seeds a demo account on first sign-in attempt:
+  `coordinator@legacy.example` / `walk-beside-families` (override with `LEGACY_ADMIN_PASSWORD`).
+- `LEGACY_SECRET` — session-signing secret (auto-generated into `data/.session-secret` if unset).
+- `COOKIE_SECURE=1` — set behind HTTPS in production.
 
 ## Notes
 
 - Directory entries (funeral homes, clergy, vendors) are illustrative sample data for the vetted
-  partner network; production would back these with a real database and partner onboarding.
-- The family's plan, checklist progress, and guestbook entries persist in `localStorage` — no
-  account needed for a first visit, and no personal data leaves the device in this build.
+  partner network; partner onboarding (`/partners`) records real applications for review.
+- No account is required to plan: the family's plan, checklist progress, and guestbook entries
+  persist in `localStorage`. Signing in adds a server copy and coordination history.
+- Outgoing email/SMS is recorded to the message outbox (visible in `/admin`) in this build; a
+  production SMTP/Twilio transport plugs into the same `Transport` interface in
+  `lib/server/notify.ts`. Payments follow the same pattern in `lib/server/payments.ts`.
