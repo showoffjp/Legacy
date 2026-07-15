@@ -95,6 +95,33 @@ function migrate(db: DatabaseSync): void {
       paid_at       TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS memorials (
+      slug       TEXT PRIMARY KEY,
+      owner_id   TEXT,
+      data       TEXT NOT NULL,
+      published  INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS condolences (
+      id            TEXT PRIMARY KEY,
+      memorial_slug TEXT NOT NULL REFERENCES memorials(slug) ON DELETE CASCADE,
+      name          TEXT NOT NULL,
+      message       TEXT NOT NULL,
+      created_at    TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS rsvps (
+      id            TEXT PRIMARY KEY,
+      memorial_slug TEXT NOT NULL REFERENCES memorials(slug) ON DELETE CASCADE,
+      name          TEXT NOT NULL,
+      attending     INTEGER NOT NULL DEFAULT 1,
+      guests        INTEGER NOT NULL DEFAULT 1,
+      note          TEXT NOT NULL DEFAULT '',
+      created_at    TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS messages (
       id           TEXT PRIMARY KEY,
       channel      TEXT NOT NULL,

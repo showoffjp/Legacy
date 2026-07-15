@@ -15,6 +15,11 @@ import { getCurrentUser } from "@/lib/server/auth";
 import { getPlanForUser } from "@/lib/server/plans";
 import { listCoordinationRequestsForUser } from "@/lib/server/coordination";
 import { listOrdersForUser } from "@/lib/server/payments";
+import {
+  condolenceCount,
+  listMemorialsForOwner,
+  rsvpSummary,
+} from "@/lib/server/memorials";
 import type { ServiceKind, ServicePlan } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -98,6 +103,7 @@ export default async function DashboardPage() {
   const plan = planRecord ? (planRecord.data as ServicePlan) : null;
   const requests = listCoordinationRequestsForUser(user.id);
   const orders = listOrdersForUser(user.id);
+  const memorials = listMemorialsForOwner(user.id);
 
   return (
     <div className="pb-24">
@@ -189,6 +195,40 @@ export default async function DashboardPage() {
             </Card>
           )}
         </DashboardSection>
+
+        {memorials.length > 0 ? (
+          <DashboardSection title="Their memorial pages">
+            <div className="flex flex-col gap-4">
+              {memorials.map((memorial) => {
+                const rsvps = rsvpSummary(memorial.slug);
+                const condolences = condolenceCount(memorial.slug);
+                return (
+                  <Card key={memorial.slug} className="p-6">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <h3 className="font-display text-xl font-medium text-ink">
+                          {memorial.data.fullName}
+                        </h3>
+                        <p className="mt-1 text-sm text-ink-faint">
+                          {condolences === 1
+                            ? "1 condolence in the guestbook"
+                            : `${condolences} condolences in the guestbook`}
+                          {" · "}
+                          {rsvps.families === 1
+                            ? `1 family (${rsvps.guests} ${rsvps.guests === 1 ? "guest" : "guests"}) expected`
+                            : `${rsvps.families} families (${rsvps.guests} guests) expected`}
+                        </p>
+                      </div>
+                      <ButtonLink variant="ghost" href={`/memorials/${memorial.slug}`}>
+                        Visit the memorial
+                      </ButtonLink>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </DashboardSection>
+        ) : null}
 
         <DashboardSection title="Coordination requests">
           {requests.length > 0 ? (

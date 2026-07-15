@@ -4,6 +4,9 @@
 # local database & secrets
 /data
 
+# e2e artifacts
+/e2e/.artifacts
+
 # next.js
 /.next/
 /out/

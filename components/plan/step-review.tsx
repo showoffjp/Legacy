@@ -32,6 +32,31 @@ export function StepReview() {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [contact, setContact] = useState({ name: "", email: "", phone: "", notes: "" });
+  const [memorialSlug, setMemorialSlug] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
+
+  async function publishMemorial() {
+    setPublishing(true);
+    setPublishError("");
+    try {
+      const res = await fetch("/api/memorial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const body = (await res.json()) as { slug?: string; error?: string };
+      if (!res.ok || !body.slug) {
+        setPublishError(body.error || "Something went wrong — please try again in a moment.");
+      } else {
+        setMemorialSlug(body.slug);
+      }
+    } catch {
+      setPublishError("We could not reach the server — please try again.");
+    } finally {
+      setPublishing(false);
+    }
+  }
 
   async function submitCoordination(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -148,10 +173,38 @@ export function StepReview() {
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <ButtonLink href="/plan/program">📖 Preview & print the program</ButtonLink>
+          <ButtonLink href="/plan/obituary" variant="outline-inverse">
+            📰 The obituary
+          </ButtonLink>
           <ButtonLink href="/tribute" variant="outline-inverse">
             🎞️ Create the tribute video
           </ButtonLink>
+          {memorialSlug ? (
+            <ButtonLink href={`/memorials/${memorialSlug}`} variant="outline-inverse">
+              🌹 Visit their memorial page
+            </ButtonLink>
+          ) : (
+            <button
+              type="button"
+              onClick={publishMemorial}
+              disabled={publishing || !plan.deceased.fullName}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 bg-transparent px-6 py-3 text-sm font-medium tracking-wide text-parchment transition-colors hover:border-gold-pale hover:bg-white/10 hover:text-gold-pale disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {publishing ? "Publishing…" : "🌹 Publish their memorial page"}
+            </button>
+          )}
         </div>
+        {memorialSlug ? (
+          <p className="mt-4 text-sm text-parchment/80">
+            Their memorial is live — share it with family and friends so they can sign the
+            guestbook and RSVP to the service.
+          </p>
+        ) : null}
+        {publishError ? (
+          <p role="alert" className="mt-4 text-sm text-red-300">
+            {publishError}
+          </p>
+        ) : null}
       </section>
 
       <section className="rounded-2xl border border-line bg-white/80 p-8 shadow-soft">

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MEMORIALS } from "@/lib/data/memorials";
+import { listPublishedMemorials } from "@/lib/server/memorials";
 import { ButtonLink, Card, Container } from "@/components/ui";
+
+// Newly published memorials must appear without a rebuild.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Memorials",
@@ -12,6 +16,7 @@ export const metadata: Metadata = {
 const yearOf = (iso: string) => iso.slice(0, 4);
 
 export default function MemorialsPage() {
+  const published = listPublishedMemorials();
   return (
     <div className="py-16 sm:py-24">
       <Container>
@@ -28,7 +33,64 @@ export default function MemorialsPage() {
           </p>
         </div>
 
-        <ul className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {published.length > 0 ? (
+          <ul className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {published.map((memorial) => (
+              <li key={memorial.slug} className="h-full">
+                <Link
+                  href={`/memorials/${memorial.slug}`}
+                  className="group block h-full focus:outline-none"
+                >
+                  <Card className="flex h-full flex-col items-center gap-4 p-8 text-center transition-shadow duration-200 group-hover:shadow-lift group-focus-visible:ring-2 group-focus-visible:ring-gold-pale">
+                    {memorial.data.portraitDataUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={memorial.data.portraitDataUrl}
+                        alt=""
+                        className="h-16 w-16 rounded-full border-2 border-gold-pale object-cover"
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className="flex h-16 w-16 items-center justify-center rounded-full bg-gold-pale/60 text-3xl"
+                      >
+                        ✝
+                      </span>
+                    )}
+                    <div>
+                      <h2 className="font-display text-2xl font-medium leading-snug text-ink">
+                        {memorial.data.fullName}
+                      </h2>
+                      {memorial.data.birthDate || memorial.data.deathDate ? (
+                        <p className="mt-1.5 text-sm text-ink-faint">
+                          {yearOf(memorial.data.birthDate)}
+                          <span className="sr-only"> to </span>
+                          <span aria-hidden className="mx-1.5 text-xs text-gold">
+                            †
+                          </span>
+                          {yearOf(memorial.data.deathDate)}
+                        </p>
+                      ) : null}
+                      {memorial.data.locationText ? (
+                        <p className="mt-0.5 text-sm text-ink-faint">{memorial.data.locationText}</p>
+                      ) : null}
+                    </div>
+                    {memorial.data.verse ? (
+                      <p className="mt-auto pt-2 text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-gold">
+                        {memorial.data.verse.reference}
+                      </p>
+                    ) : null}
+                  </Card>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        <p className="mt-16 text-center text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-ink-faint">
+          Examples of remembrance
+        </p>
+        <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {MEMORIALS.map((memorial) => (
             <li key={memorial.slug} className="h-full">
               <Link

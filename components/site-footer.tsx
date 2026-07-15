@@ -7,6 +7,7 @@ const FOOTER_LINKS = [
     links: [
       { href: "/plan", label: "Plan a Service" },
       { href: "/plan/program", label: "Service Program" },
+      { href: "/plan/obituary", label: "The Obituary" },
       { href: "/pricing", label: "Packages & Pricing" },
       { href: "/checklist", label: "Bereavement Checklist" },
     ],
