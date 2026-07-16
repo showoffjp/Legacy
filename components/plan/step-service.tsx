@@ -166,21 +166,37 @@ export function StepService() {
               },
             ] as const
           ).map((opt) => (
-            <label
-              key={opt.key}
-              className="flex cursor-pointer items-start gap-4 rounded-2xl border border-line bg-white/80 p-5 shadow-soft transition-colors has-checked:border-gold"
-            >
-              <input
-                type="checkbox"
-                checked={opt.checked}
-                onChange={(e) => update({ service: { [opt.key]: e.target.checked } })}
-                className="mt-1 h-4 w-4 accent-gold"
-              />
-              <span>
-                <span className="block text-sm font-medium text-ink">{opt.title}</span>
-                <span className="mt-0.5 block text-sm text-ink-soft">{opt.text}</span>
-              </span>
-            </label>
+            <div key={opt.key}>
+              <label className="flex cursor-pointer items-start gap-4 rounded-2xl border border-line bg-white/80 p-5 shadow-soft transition-colors has-checked:border-gold">
+                <input
+                  type="checkbox"
+                  checked={opt.checked}
+                  onChange={(e) => update({ service: { [opt.key]: e.target.checked } })}
+                  className="mt-1 h-4 w-4 accent-gold"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-ink">{opt.title}</span>
+                  <span className="mt-0.5 block text-sm text-ink-soft">{opt.text}</span>
+                </span>
+              </label>
+              {opt.key === "livestream" && s.livestream ? (
+                <div className="mt-3 pl-4 sm:pl-9">
+                  <Field
+                    label="Livestream link (optional)"
+                    hint="If your church or funeral home has given you one — it appears on the memorial page and printed program."
+                  >
+                    <input
+                      className={inputCls}
+                      type="url"
+                      inputMode="url"
+                      value={s.livestreamUrl}
+                      onChange={(e) => update({ service: { livestreamUrl: e.target.value } })}
+                      placeholder="https://youtube.com/live/…"
+                    />
+                  </Field>
+                </div>
+              ) : null}
+            </div>
           ))}
         </div>
       </fieldset>

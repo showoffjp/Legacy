@@ -258,6 +258,11 @@ function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial }) {
         ) : null}
         {dates ? <p className="mt-5 text-sm text-ink-faint">{dates}</p> : null}
         {d.locationText ? <p className="mt-1 text-sm text-ink-faint">{d.locationText}</p> : null}
+        {d.veteranBranch ? (
+          <p className="mt-4 text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-gold">
+            ★ {d.veteranBranch} Veteran ★
+          </p>
+        ) : null}
         {d.verse ? (
           <VerseBlock className="mt-14" text={d.verse.text} reference={d.verse.reference} />
         ) : null}
@@ -297,10 +302,23 @@ function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial }) {
                 ) : null}
                 {service.livestream ? (
                   <div>
-                    <dd className="text-sm italic text-ink-faint">
-                      For family afar, the service will be lovingly streamed — the family will share
-                      the link.
-                    </dd>
+                    {service.livestreamUrl ? (
+                      <dd>
+                        <a
+                          href={service.livestreamUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-full border border-gold/50 bg-gold-pale/40 px-5 py-2.5 text-sm font-medium text-gold-deep transition-colors hover:bg-gold-pale"
+                        >
+                          📺 Join the service online
+                        </a>
+                      </dd>
+                    ) : (
+                      <dd className="text-sm italic text-ink-faint">
+                        For family afar, the service will be lovingly streamed — the family will
+                        share the link.
+                      </dd>
+                    )}
                   </div>
                 ) : null}
               </dl>

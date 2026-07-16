@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/server/auth";
 import {
+  sanitizeLivestreamUrl,
   unpublishMemorialByOwner,
   updateMemorialByOwner,
   type MemorialPrivacy,
@@ -32,6 +33,7 @@ export async function updateMemorialAction(
   const state = String(formData.get("state") ?? "").trim().toUpperCase().slice(0, 2);
   const kind = String(formData.get("serviceKind") ?? "");
   const livestream = formData.get("livestream") === "on";
+  const livestreamUrl = sanitizeLivestreamUrl(formData.get("livestreamUrl"));
   const hasService = Boolean(kind && (serviceDate || venueName || city));
 
   const ok = updateMemorialByOwner(slug, user.id, {
@@ -51,7 +53,7 @@ export async function updateMemorialAction(
       }
     })(),
     service: hasService
-      ? { kind, date: serviceDate, time: serviceTime, venueName, city, state, livestream }
+      ? { kind, date: serviceDate, time: serviceTime, venueName, city, state, livestream, livestreamUrl }
       : null,
     privacy,
   });

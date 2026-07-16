@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/server/auth";
 import { joinPlanByCode, leaveSharedPlan } from "@/lib/server/plans";
+import { deactivateRemembranceForUser } from "@/lib/server/remembrances";
 
 export interface JoinPlanState {
   ok: boolean;
@@ -26,5 +27,13 @@ export async function leavePlanAction(): Promise<void> {
   const user = await getCurrentUser();
   if (!user) return;
   leaveSharedPlan(user.id);
+  revalidatePath("/account/dashboard");
+}
+
+export async function endRemembranceAction(formData: FormData): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) return;
+  const id = String(formData.get("id") ?? "");
+  if (id) deactivateRemembranceForUser(id, user.id);
   revalidatePath("/account/dashboard");
 }

@@ -20,6 +20,8 @@ const FOOTER_LINKS = [
     links: [
       { href: "/tribute", label: "Tribute Video Studio" },
       { href: "/memorials", label: "Memorial Pages" },
+      { href: "/aftercare", label: "Aftercare & the Estate Path" },
+      { href: "/aftercare#grief-year", label: "The Grief Year" },
       { href: "/resources", label: "Grief Resources" },
     ],
   },

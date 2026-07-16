@@ -36,7 +36,11 @@ export async function GET(
   const location = [service.venueName, service.city, service.state].filter(Boolean).join(", ");
   const description = [
     `In loving memory of ${memorial.data.fullName}.`,
-    service.livestream ? "A livestream link will be shared by the family." : "",
+    service.livestream
+      ? service.livestreamUrl
+        ? `Watch online: ${service.livestreamUrl}`
+        : "A livestream link will be shared by the family."
+      : "",
     `Memorial: /memorials/${slug}`,
   ]
     .filter(Boolean)

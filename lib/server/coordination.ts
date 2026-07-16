@@ -81,12 +81,16 @@ export async function createCoordinationRequest(
     .filter(Boolean)
     .join(", ");
 
+  const veteranNote = input.plan.deceased.veteran
+    ? `\n\n${family} served in the ${input.plan.deceased.veteranBranch || "armed forces"} — the family asks that veteran honors (flag presentation, Taps, honor guard) be arranged. Legacy will assist with the DD-214 and VA paperwork.`
+    : "";
+
   if (home) {
     await sendMessage({
       channel: "email",
       recipient: `care@${home.website.replace(/^https?:\/\//, "")}`,
       subject: `New service coordination request ${reference} — ${family}`,
-      body: `Dear ${home.name},\n\nA family has asked Legacy to coordinate a service for ${family}${when ? ` on ${when}` : ""}${where ? ` (${where})` : ""}. The full plan — service type, casket, flowers, music, and readings — is attached in the coordinator console under reference ${reference}.\n\nFamily contact: ${input.contact.name}, ${input.contact.email}${input.contact.phone ? `, ${input.contact.phone}` : ""}.\n\nA Legacy coordinator will call you within the hour to confirm receipt.\n\nWith gratitude for your care,\nLegacy Coordination`,
+      body: `Dear ${home.name},\n\nA family has asked Legacy to coordinate a service for ${family}${when ? ` on ${when}` : ""}${where ? ` (${where})` : ""}. The full plan — service type, casket, flowers, music, and readings — is attached in the coordinator console under reference ${reference}.${veteranNote}\n\nFamily contact: ${input.contact.name}, ${input.contact.email}${input.contact.phone ? `, ${input.contact.phone}` : ""}.\n\nA Legacy coordinator will call you within the hour to confirm receipt.\n\nWith gratitude for your care,\nLegacy Coordination`,
       relatedType: "coordination",
       relatedId: id,
     });

@@ -134,6 +134,11 @@ export function ProgramView() {
             {dates ? (
               <p className="mt-4 text-sm tracking-[0.15em] text-ink-soft">{dates}</p>
             ) : null}
+            {plan.deceased.veteran ? (
+              <p className="mt-3 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-gold">
+                ★ {plan.deceased.veteranBranch || "Armed Forces"} Veteran ★
+              </p>
+            ) : null}
             {favoriteVerse ? (
               <div className="mt-8 max-w-md">
                 <p className="font-display text-lg italic leading-relaxed text-ink-soft">
@@ -192,7 +197,7 @@ export function ProgramView() {
             {plan.service.graveside ? (
               <OrderRow left="Committal" right="At the graveside" />
             ) : null}
-            {plan.addonIds.includes("veteran-honors") ? (
+            {plan.addonIds.includes("veteran-honors") || plan.deceased.veteran ? (
               <OrderRow left="Military Honors" right="Flag presentation & Taps" />
             ) : null}
             {plan.addonIds.includes("dove-release") ? (
@@ -204,7 +209,9 @@ export function ProgramView() {
           </div>
           {plan.service.livestream ? (
             <p className="mt-6 text-center text-xs italic text-ink-faint">
-              For family afar, the service is lovingly streamed — the family will share the link.
+              {plan.service.livestreamUrl
+                ? `For family afar, the service is lovingly streamed: ${plan.service.livestreamUrl}`
+                : "For family afar, the service is lovingly streamed — the family will share the link."}
             </p>
           ) : null}
         </Page>

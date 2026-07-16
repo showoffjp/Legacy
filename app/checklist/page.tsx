@@ -15,6 +15,12 @@ const NEXT_STEPS = [
     cta: "Begin planning",
   },
   {
+    href: "/aftercare",
+    title: "After the service",
+    body: "The estate path, notification letters written for you, and gentle notes of comfort across the first year.",
+    cta: "The long walk afterward",
+  },
+  {
     href: "/resources",
     title: "Grief resources",
     body: "Scriptures of comfort, prayers for the grieving, and gentle guidance for the road that follows the service.",
@@ -53,14 +59,14 @@ export default function ChecklistPage() {
 
       <section aria-labelledby="next-steps-heading">
         <Container>
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-4xl">
             <h2
               id="next-steps-heading"
               className="text-center font-display text-3xl font-medium text-ink"
             >
               Where to turn next
             </h2>
-            <div className="mt-8 grid gap-5 sm:grid-cols-2">
+            <div className="mt-8 grid gap-5 sm:grid-cols-3">
               {NEXT_STEPS.map((step) => (
                 <Link key={step.href} href={step.href} className="group block">
                   <Card className="h-full p-7 transition-shadow duration-200 group-hover:shadow-lift">

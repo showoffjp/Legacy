@@ -169,6 +169,21 @@ export function MemorialEditForm({ memorial }: { memorial: PublishedMemorial }) 
             />
             Note that the service will be livestreamed
           </label>
+          <div className="mt-3">
+            <Field
+              label="Livestream link (optional)"
+              hint="Shown as a “Join the service online” button on the page."
+            >
+              <input
+                name="livestreamUrl"
+                type="url"
+                inputMode="url"
+                defaultValue={d.service?.livestreamUrl ?? ""}
+                placeholder="https://youtube.com/live/…"
+                className={inputCls}
+              />
+            </Field>
+          </div>
         </fieldset>
 
         <fieldset className="rounded-2xl border border-line bg-white/70 p-5">

@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/memorials",
     "/directory",
     "/checklist",
+    "/aftercare",
     "/resources",
     "/pricing",
     "/partners",

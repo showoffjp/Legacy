@@ -170,10 +170,24 @@ const SERVICE_GROUPS: {
     items: [
       {
         icon: "📋",
-        title: "Certificates & paperwork",
-        text: "Death certificates in the right quantity, Social Security and insurance notifications, account settlement — the paperwork carried for you.",
-        href: "/plan",
-        linkLabel: "Add paperwork help",
+        title: "The estate path",
+        text: "Death certificates, Social Security, probate, taxes — every administrative matter a death asks, in the order it asks, with your progress saved.",
+        href: "/aftercare",
+        linkLabel: "Walk the estate path",
+      },
+      {
+        icon: "✉️",
+        title: "Notification letters, written for you",
+        text: "Banks, insurers, credit bureaus, subscriptions — the same sad letter, composed once on your device and printed for every institution.",
+        href: "/aftercare#letters",
+        linkLabel: "Compose the letters",
+      },
+      {
+        icon: "🕊️",
+        title: "The grief year",
+        text: "One month, six months, the first Christmas, the first anniversary — a verse and a word of comfort in your inbox on the hardest days.",
+        href: "/aftercare#grief-year",
+        linkLabel: "Walk the year with us",
       },
       {
         icon: "⚖️",
@@ -181,13 +195,6 @@ const SERVICE_GROUPS: {
         text: "Vetted probate attorneys and estate advisors, with a first consultation at no charge.",
         href: "/directory?tab=providers",
         linkLabel: "Legal & estate partners",
-      },
-      {
-        icon: "💛",
-        title: "Keepsakes & remembrances",
-        text: "Thumbprint pendants, memorial trees planted in their name, and keepsake jewelry that stays close for a lifetime.",
-        href: "/plan",
-        linkLabel: "Choose keepsakes",
       },
       {
         icon: "🕯️",

@@ -120,6 +120,12 @@ function RequestCard({
           {addons.length ? <div>Honors & add-ons: {addons.join(", ")}</div> : null}
           {hymns.length ? <div>Hymns: {hymns.join(", ")}</div> : null}
           {readings.length ? <div>Readings: {readings.join(", ")}</div> : null}
+          {plan?.deceased?.veteran ? (
+            <div>
+              🎖️ Veteran — {plan.deceased.veteranBranch || "branch to be confirmed"}; honors
+              requested.
+            </div>
+          ) : null}
           {plan?.service?.visitation ? <div>Visitation the evening before.</div> : null}
           {plan?.service?.livestream ? <div>Livestream requested.</div> : null}
           {plan?.service?.graveside ? <div>Graveside committal to follow.</div> : null}

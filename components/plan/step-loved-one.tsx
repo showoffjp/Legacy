@@ -17,6 +17,16 @@ const DENOMINATIONS: Denomination[] = [
   "Non-denominational",
 ];
 
+const SERVICE_BRANCHES = [
+  "U.S. Army",
+  "U.S. Navy",
+  "U.S. Air Force",
+  "U.S. Marine Corps",
+  "U.S. Coast Guard",
+  "U.S. Space Force",
+  "National Guard / Reserves",
+];
+
 /** Downscale an uploaded portrait so it stores comfortably in localStorage. */
 async function fileToPortraitDataUrl(file: File): Promise<string> {
   const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -159,6 +169,51 @@ export function StepLovedOne() {
             ))}
           </select>
         </Field>
+
+        <fieldset>
+          <label className="flex cursor-pointer items-start gap-4 rounded-2xl border border-line bg-white/80 p-5 shadow-soft transition-colors has-checked:border-gold">
+            <input
+              type="checkbox"
+              checked={d.veteran}
+              onChange={(e) =>
+                update({
+                  deceased: {
+                    veteran: e.target.checked,
+                    ...(e.target.checked ? null : { veteranBranch: "" }),
+                  },
+                })
+              }
+              className="mt-1 h-4 w-4 accent-gold"
+            />
+            <span>
+              <span className="block text-sm font-medium text-ink">
+                🎖️ {preNeed ? "I/they served in the armed forces" : "They served in the armed forces"}
+              </span>
+              <span className="mt-0.5 block text-sm text-ink-soft">
+                Veteran honors — flag presentation, Taps, and an honor guard — can be arranged at
+                no cost to the family. We carry the paperwork.
+              </span>
+            </span>
+          </label>
+          {d.veteran ? (
+            <div className="mt-3">
+              <Field label="Branch of service">
+                <select
+                  className={inputCls}
+                  value={d.veteranBranch}
+                  onChange={(e) => update({ deceased: { veteranBranch: e.target.value } })}
+                >
+                  <option value="">Choose a branch…</option>
+                  {SERVICE_BRANCHES.map((branch) => (
+                    <option key={branch} value={branch}>
+                      {branch}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          ) : null}
+        </fieldset>
 
         <Field
           label={preNeed ? "Their life, in their words" : "Their life, in your words"}

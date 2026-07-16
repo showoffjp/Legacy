@@ -178,6 +178,9 @@ export interface ServicePlan {
     survivedBy: string;
     favoriteVerseId: string;
     portraitDataUrl: string;
+    /** They served — flag presentation, Taps, honor guard at no cost to the family. */
+    veteran: boolean;
+    veteranBranch: string;
   };
   service: {
     kind: ServiceKind | "";
@@ -187,6 +190,8 @@ export interface ServicePlan {
     location: GeoLocation;
     visitation: boolean;
     livestream: boolean;
+    /** Where far-away family will watch, once the family has a link. */
+    livestreamUrl: string;
     graveside: boolean;
   };
   funeralHomeId: string;
@@ -217,6 +222,8 @@ export const EMPTY_PLAN: ServicePlan = {
     survivedBy: "",
     favoriteVerseId: "",
     portraitDataUrl: "",
+    veteran: false,
+    veteranBranch: "",
   },
   service: {
     kind: "",
@@ -226,6 +233,7 @@ export const EMPTY_PLAN: ServicePlan = {
     location: { city: "", state: "", zip: "" },
     visitation: true,
     livestream: false,
+    livestreamUrl: "",
     graveside: false,
   },
   funeralHomeId: "",

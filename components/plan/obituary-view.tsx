@@ -79,7 +79,11 @@ export function ObituaryView() {
         serviceBits.push("The family will receive friends the evening before.");
       }
       if (s.livestream) {
-        serviceBits.push("For those unable to travel, the service will be streamed; the family will share the link.");
+        serviceBits.push(
+          s.livestreamUrl
+            ? `For those unable to travel, the service will be streamed at ${s.livestreamUrl}.`
+            : "For those unable to travel, the service will be streamed; the family will share the link.",
+        );
       }
       if (home) serviceBits.push(`Services entrusted to ${home.name}.`);
     }

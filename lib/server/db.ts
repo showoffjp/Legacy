@@ -187,6 +187,29 @@ function migrate(db: DatabaseSync): void {
       status       TEXT NOT NULL DEFAULT 'queued',
       created_at   TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS remembrances (
+      id              TEXT PRIMARY KEY,
+      user_id         TEXT,
+      loved_one_name  TEXT NOT NULL,
+      death_date      TEXT NOT NULL,
+      recipient_name  TEXT NOT NULL,
+      recipient_email TEXT NOT NULL,
+      active          INTEGER NOT NULL DEFAULT 1,
+      created_at      TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS remembrance_events (
+      id             TEXT PRIMARY KEY,
+      remembrance_id TEXT NOT NULL REFERENCES remembrances(id) ON DELETE CASCADE,
+      send_on        TEXT NOT NULL,
+      title          TEXT NOT NULL,
+      note           TEXT NOT NULL,
+      verse_text     TEXT NOT NULL,
+      verse_ref      TEXT NOT NULL,
+      status         TEXT NOT NULL DEFAULT 'pending',
+      sent_at        TEXT
+    );
   `);
 
   // Additive migrations for databases created before these columns existed.

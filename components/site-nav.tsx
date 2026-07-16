@@ -9,14 +9,16 @@ interface NavUser {
   role: "family" | "coordinator" | "partner";
 }
 
+// `xlOnly` links stay in the mobile menu and reappear on roomy screens.
 const LINKS = [
   { href: "/plan", label: "Plan a Service" },
   { href: "/services", label: "Services" },
-  { href: "/tribute", label: "Tribute Videos" },
+  { href: "/tribute", label: "Tributes", xlOnly: true },
   { href: "/memorials", label: "Memorials" },
-  { href: "/directory", label: "Trusted Directory" },
-  { href: "/resources", label: "Grief Resources" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/aftercare", label: "Aftercare" },
+  { href: "/directory", label: "Directory" },
+  { href: "/resources", label: "Resources" },
+  { href: "/pricing", label: "Pricing", xlOnly: true },
 ];
 
 export function SiteNav() {
@@ -64,7 +66,9 @@ export function SiteNav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full px-3.5 py-2 text-[0.83rem] font-medium transition-colors ${
+                className={`${
+                  link.xlOnly ? "hidden xl:inline-flex" : ""
+                } whitespace-nowrap rounded-full px-3.5 py-2 text-[0.83rem] font-medium transition-colors ${
                   active
                     ? "bg-gold-pale/60 text-gold-deep"
                     : "text-ink-soft hover:bg-white hover:text-ink"

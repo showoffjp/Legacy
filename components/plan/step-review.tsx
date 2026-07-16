@@ -114,6 +114,12 @@ export function StepReview() {
             <Row label="In loving memory of" value={plan.deceased.fullName} />
             <Row label="Dates" value={dates} />
             <Row label="Tradition" value={plan.deceased.denomination} />
+            {plan.deceased.veteran ? (
+              <Row
+                label="Veteran honors"
+                value={plan.deceased.veteranBranch || "Requested — branch to be confirmed"}
+              />
+            ) : null}
             <Row label="Kind of service" value={KIND_LABELS[plan.service.kind] ?? ""} />
             <Row
               label="When"

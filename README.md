@@ -20,10 +20,11 @@ home.
 A nine-step wizard that never shows a blank page or a hard sell:
 
 1. **Your loved one** — name, dates, Christian tradition, their story in the family's words, a
-   portrait photograph (downscaled in the browser).
+   portrait photograph (downscaled in the browser), and **veteran honors** — branch of service
+   noted so flag presentation, Taps, and an honor guard can be arranged at no cost to the family.
 2. **The service** — traditional burial, cremation with service, memorial, or graveside;
-   date/time/venue; visitation, livestream, and committal choices; the service location that
-   drives every match below.
+   date/time/venue; visitation, livestream (with an optional watch link), and committal choices;
+   the service location that drives every match below.
 3. **Funeral home** — vetted partners, nearest first, chosen with one click.
 4. **Pastor or priest** — matched to the loved one's denomination (nine traditions), nearest
    first, with "travels for services" noted.
@@ -50,9 +51,10 @@ nothing is owed, until the family calls.
 
 Every keepsake is generated live from the plan and printed with one click:
 
-- **Order-of-service program** (`/plan/program`) — cover with portrait and favorite verse, the
-  order of worship built from the family's hymns and readings, the obituary, full reading texts,
-  pallbearers, and acknowledgments; print-ready for double-sided folding.
+- **Order-of-service program** (`/plan/program`) — cover with portrait, favorite verse, and a
+  veteran honor line; the order of worship built from the family's hymns and readings (military
+  honors included for those who served), the obituary, full reading texts, pallbearers, and
+  acknowledgments; print-ready for double-sided folding.
 - **Obituary** (`/plan/obituary`) — a composed obituary with age and homegoing date, plus a
   copy-ready plain-text version formatted for newspaper submission.
 - **Acknowledgment cards** (`/plan/cards`) — four matching thank-you cards per sheet with cut
@@ -72,7 +74,9 @@ service. Built on `canvas.captureStream()` + `MediaRecorder` + WebAudio.
 One click on the review step publishes a living page of remembrance: portrait, their story, their
 verse, the hymns they loved, and who survives them. Each memorial carries:
 
-- **Service details** with a downloadable **calendar file (.ics)** and a livestream note.
+- **Service details** with a downloadable **calendar file (.ics)** and a **"Join the service
+  online"** button when the family adds a livestream link; veterans carry an honor line beneath
+  their name.
 - **RSVP** with party size — so the family knows how many to expect.
 - **The Repast Table** — church family promise dishes for the meal after the service, see what is
   already coming, and the family never thinks about food.
@@ -120,6 +124,25 @@ network; onboarding below is real.)
   walking with grief and supporting a grieving family, and Christ-centered support groups
   (GriefShare), including gentle signposting to the 988 Lifeline when grief needs more help.
 
+### 🕯️ Aftercare & the estate path — `/aftercare`
+
+The year after the service, carried together:
+
+- **The Estate Path** — every administrative matter a death asks of a family, grouped by season
+  (the first days → the first year): death certificates, Social Security, life insurance,
+  probate, credit bureaus, the DMV, digital accounts, final taxes, closing the estate — with
+  progress saved on the device, and honest "this is guidance, not legal advice" signposting to
+  the vetted probate partners.
+- **Notification letters, written for you** — the same sad letter every bank, insurer, credit
+  bureau, and subscription needs, composed **entirely on the family's device** (nothing typed is
+  sent to or stored by Legacy): sender, relationship, institutions (one-click add for the three
+  credit bureaus), account references — printed one letter per page with enclosure lines.
+- **The Grief Year** — opt-in notes of comfort timed to the hardest milestones: one month, three
+  months, six months, **the first Christmas**, and the first anniversary. Each carries a verse
+  and a word written for that day, an unsubscribe link in every note, dashboard management
+  ("End the notes"), and delivery through the same messaging rails as everything else — a daily
+  Vercel cron (`vercel.json`) calls `/api/remembrances/dispatch`, protectable with `CRON_SECRET`.
+
 ---
 
 ## Architecture
@@ -133,7 +156,7 @@ network; onboarding below is real.)
 | Messaging | `Transport` interface (`lib/server/notify.ts`) — outbox now, SMTP/Twilio later |
 | Payments | `PaymentProvider` interface (`lib/server/payments.ts`) — demo now, Stripe later |
 | Client state | The family's plan lives in `localStorage` and syncs to the account when signed in |
-| Tests | Playwright E2E suite in `e2e/` (five specs), run by GitHub Actions CI on every push/PR |
+| Tests | Playwright E2E suite in `e2e/` (seven specs), run by GitHub Actions CI on every push/PR |
 
 The interfaces are the architecture: swapping SQLite for Postgres, the outbox for Resend/Twilio,
 or the demo provider for Stripe touches only `lib/server/` — no page changes.
@@ -156,6 +179,7 @@ npm run e2e        # full Playwright suite (starts the server itself)
 | `LEGACY_ADMIN_PASSWORD` | Password for the seeded coordinator (default `walk-beside-families`, account `coordinator@legacy.example`, seeded on first sign-in attempt) |
 | `LEGACY_DATA_DIR` | Override the SQLite/data location |
 | `COOKIE_SECURE=1` | Set behind HTTPS in production |
+| `CRON_SECRET` | Optional shared secret for `/api/remembrances/dispatch` — Vercel sends it automatically as a Bearer token when set; without it the endpoint is open (it only sends what is already due) |
 
 ### Going live — flip the switches
 
@@ -224,21 +248,22 @@ database (first item on the roadmap).
 
 - **Memorial gifts** — "in lieu of flowers" donations to a ministry or charity, receipted, with
   totals shared gently with the family.
-- **Livestream, embedded** — the stream player and its recording living on the memorial page
-  afterward.
+- **Livestream, embedded** — the "Join the service online" link is live today; next, the stream
+  player and its recording living on the memorial page afterward.
 - **Higher-fidelity tribute films** — optional server-side rendering to MP4/1080p with more
   motion styles, licensed hymn recordings, and voice-over recording.
 - **Writing help, gently offered** — optional AI-assisted drafting of the obituary and eulogy
   from interview prompts ("Tell me about her kitchen…"), always in the family's voice and always
   theirs to edit.
-- **The grief year** — opt-in scheduled comfort: a verse before the first Christmas, a note on
-  the anniversary, prompts for the family to gather; integration with GriefShare group finders.
+- **The grief year, deepened** — the milestone notes ship today (`/aftercare`); next: prompts
+  for the family to gather, and integration with GriefShare group finders.
 - **Church partnership portal** — congregations connect their sanctuary calendar, choir and AV
   teams, and repast hall so booking a church service is one coordinated step.
-- **Veteran honors** — DD-214 intake, flag and honor-guard scheduling, VA benefit guidance.
+- **Veteran honors, completed** — branch intake, program honors, and partner notification ship
+  today; next: DD-214 document intake, flag and honor-guard scheduling, VA claim filing help.
 - **Monuments** — a headstone designer with engraving preview and cemetery-regulation checks.
-- **The estate path** — executor task expansion of the checklist, a document vault, and generated
-  account-closure letters for banks and agencies.
+- **The estate vault** — the executor checklist and generated account-closure letters ship today
+  (`/aftercare`); next: a secure document vault for the will, deeds, and certificates.
 - **Español primero** — full Spanish localization (bilingual services are already in the data
   model), then other languages.
 

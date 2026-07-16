@@ -18,7 +18,7 @@ import {
   joinedPlanOwner,
   listPlanMembers,
 } from "@/lib/server/plans";
-import { leavePlanAction } from "@/app/account/dashboard/actions";
+import { endRemembranceAction, leavePlanAction } from "@/app/account/dashboard/actions";
 import { JoinPlanForm } from "@/components/account/plan-together";
 import { listCoordinationRequestsForUser } from "@/lib/server/coordination";
 import { listOrdersForUser } from "@/lib/server/payments";
@@ -30,6 +30,7 @@ import {
   rsvpSummary,
 } from "@/lib/server/memorials";
 import { listRequestMessages } from "@/lib/server/messaging";
+import { listRemembrancesForUser } from "@/lib/server/remembrances";
 import { RequestThread } from "@/components/request-thread";
 import type { ServiceKind, ServicePlan } from "@/lib/types";
 
@@ -115,6 +116,7 @@ export default async function DashboardPage() {
   const requests = listCoordinationRequestsForUser(user.id);
   const orders = listOrdersForUser(user.id);
   const memorials = listMemorialsForOwner(user.id);
+  const remembrances = listRemembrancesForUser(user.id);
 
   return (
     <div className="pb-24">
@@ -314,6 +316,37 @@ export default async function DashboardPage() {
                   </Card>
                 );
               })}
+            </div>
+          </DashboardSection>
+        ) : null}
+
+        {remembrances.length > 0 ? (
+          <DashboardSection title="The grief year">
+            <div className="flex flex-col gap-4">
+              {remembrances.map((remembrance) => (
+                <Card key={remembrance.id} className="p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-display text-xl font-medium text-ink">
+                        Walking the year for {remembrance.lovedOneName}
+                      </h3>
+                      <p className="mt-1 text-sm text-ink-faint">
+                        {count(remembrance.sentCount, "note")} of comfort sent to{" "}
+                        {remembrance.recipientEmail}
+                        {remembrance.nextEvent
+                          ? ` · next: ${remembrance.nextEvent.title.toLowerCase()}, ${formatLongDate(remembrance.nextEvent.sendOn)}`
+                          : " · every milestone of the year has been kept"}
+                      </p>
+                    </div>
+                    <form action={endRemembranceAction}>
+                      <input type="hidden" name="id" value={remembrance.id} />
+                      <Button type="submit" variant="outline">
+                        End the notes
+                      </Button>
+                    </form>
+                  </div>
+                </Card>
+              ))}
             </div>
           </DashboardSection>
         ) : null}

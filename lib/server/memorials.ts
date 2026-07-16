@@ -32,7 +32,24 @@ export interface PublishedMemorialData {
     city: string;
     state: string;
     livestream: boolean;
+    /** Where to watch, when the family has a link (http/https only). */
+    livestreamUrl?: string;
   } | null;
+  /** They served — shown as an honor line on the page. */
+  veteranBranch?: string;
+}
+
+/** Keep only web links — anything else is dropped rather than rendered. */
+export function sanitizeLivestreamUrl(url: unknown): string {
+  if (typeof url !== "string") return "";
+  const trimmed = url.trim().slice(0, 500);
+  if (!trimmed) return "";
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? trimmed : "";
+  } catch {
+    return "";
+  }
 }
 
 export type MemorialPrivacy = "public" | "link-only";
@@ -119,6 +136,9 @@ export function publishMemorialFromPlan(plan: ServicePlan, ownerId: string | nul
     survivedBy: plan.deceased.survivedBy.trim(),
     hymnIds: plan.hymnIds,
     portraitDataUrl: plan.deceased.portraitDataUrl,
+    ...(plan.deceased.veteran
+      ? { veteranBranch: plan.deceased.veteranBranch.trim() || "Armed Forces" }
+      : null),
     service: plan.service.kind
       ? {
           kind: plan.service.kind,
@@ -128,6 +148,7 @@ export function publishMemorialFromPlan(plan: ServicePlan, ownerId: string | nul
           city: plan.service.location.city,
           state: plan.service.location.state,
           livestream: plan.service.livestream,
+          livestreamUrl: sanitizeLivestreamUrl(plan.service.livestreamUrl),
         }
       : null,
   };
