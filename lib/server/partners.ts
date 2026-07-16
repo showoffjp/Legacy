@@ -56,13 +56,12 @@ export async function createPartnerApplication(
   input: PartnerApplicationInput,
 ): Promise<string> {
   const id = randomUUID();
-  getDb()
-    .prepare(
-      `INSERT INTO partner_applications
-         (id, org_name, category, contact_name, email, phone, city, state, zip, website, message, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?)`,
-    )
-    .run(
+  const db = await getDb();
+  await db.run(
+    `INSERT INTO partner_applications
+       (id, org_name, category, contact_name, email, phone, city, state, zip, website, message, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?)`,
+    [
       id,
       input.orgName,
       input.category,
@@ -75,7 +74,8 @@ export async function createPartnerApplication(
       input.website,
       input.message,
       nowIso(),
-    );
+    ],
+  );
 
   await sendMessage({
     channel: "email",
@@ -89,10 +89,11 @@ export async function createPartnerApplication(
   return id;
 }
 
-export function listPartnerApplications(): PartnerApplicationRow[] {
-  return getDb()
-    .prepare("SELECT * FROM partner_applications ORDER BY created_at DESC")
-    .all() as unknown as PartnerApplicationRow[];
+export async function listPartnerApplications(): Promise<PartnerApplicationRow[]> {
+  const db = await getDb();
+  return db.all<PartnerApplicationRow>(
+    "SELECT * FROM partner_applications ORDER BY created_at DESC",
+  );
 }
 
 const APPLICATION_STATUSES: ApplicationStatus[] = [
@@ -102,10 +103,9 @@ const APPLICATION_STATUSES: ApplicationStatus[] = [
   "declined",
 ];
 
-export function setApplicationStatus(id: string, status: string): boolean {
+export async function setApplicationStatus(id: string, status: string): Promise<boolean> {
   if (!APPLICATION_STATUSES.includes(status as ApplicationStatus)) return false;
-  getDb()
-    .prepare("UPDATE partner_applications SET status = ? WHERE id = ?")
-    .run(status, id);
+  const db = await getDb();
+  await db.run("UPDATE partner_applications SET status = ? WHERE id = ?", [status, id]);
   return true;
 }

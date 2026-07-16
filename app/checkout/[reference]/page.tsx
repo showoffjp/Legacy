@@ -17,7 +17,7 @@ export default async function PaymentPage({
   params: Promise<{ reference: string }>;
 }) {
   const { reference } = await params;
-  const order = getOrderByReference(reference);
+  const order = await getOrderByReference(reference);
   if (!order) redirect("/pricing");
   if (order.status === "paid") redirect(`/checkout/${reference}/receipt`);
   // Assignment-funded orders never pass through a payment step.

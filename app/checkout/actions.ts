@@ -28,7 +28,7 @@ export async function startCheckout(
   if (!EMAIL_RE.test(contactEmail)) return { error: "Please enter a valid email address." };
 
   const user = await getCurrentUser();
-  const order = createOrder({
+  const order = await createOrder({
     userId: user?.id ?? null,
     packageId,
     contactName,
@@ -87,7 +87,7 @@ export async function confirmDemoPayment(formData: FormData): Promise<void> {
   const reference = String(formData.get("reference") ?? "");
   {
     // Assignment orders are completed by coordinator verification, never here.
-    const order = getOrderByReference(reference);
+    const order = await getOrderByReference(reference);
     if (order?.provider === "insurance-assignment") {
       redirect(`/checkout/${reference}/assignment`);
     }
@@ -96,7 +96,7 @@ export async function confirmDemoPayment(formData: FormData): Promise<void> {
   if (provider.name !== "demo") {
     // Live payments configured: nothing completes without real payment —
     // this page becomes the way back into the hosted checkout.
-    const order = getOrderByReference(reference);
+    const order = await getOrderByReference(reference);
     if (!order) redirect("/pricing");
     redirect(await provider.beginCheckout(order));
   }

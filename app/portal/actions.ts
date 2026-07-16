@@ -9,14 +9,14 @@ import { getPartnerLink, listRequestsForPartner } from "@/lib/server/portal";
 export async function partnerUpdateStatus(formData: FormData): Promise<void> {
   const user = await getCurrentUser();
   if (!user || user.role !== "partner") return;
-  const link = getPartnerLink(user.id);
+  const link = await getPartnerLink(user.id);
   if (!link) return;
 
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
-  const mine = listRequestsForPartner(link).some((r) => r.id === id);
+  const mine = (await listRequestsForPartner(link)).some((r) => r.id === id);
   if (!mine) return;
 
-  setCoordinationStatus(id, status);
+  await setCoordinationStatus(id, status);
   revalidatePath("/portal");
 }

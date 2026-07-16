@@ -124,52 +124,61 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!token) return null;
   const userId = readToken(token);
   if (!userId) return null;
-  const row = getDb()
-    .prepare("SELECT id, email, name, password_hash, role FROM users WHERE id = ?")
-    .get(userId) as unknown as UserRow | undefined;
+  const db = await getDb();
+  const row = await db.get<UserRow>(
+    "SELECT id, email, name, password_hash, role FROM users WHERE id = ?",
+    [userId],
+  );
   return row ? toUser(row) : null;
 }
 
 /* ——— User accounts ——— */
 
-export function findUserByEmail(email: string): (User & { passwordHash: string }) | null {
-  const row = getDb()
-    .prepare("SELECT id, email, name, password_hash, role FROM users WHERE email = ?")
-    .get(email.trim().toLowerCase()) as unknown as UserRow | undefined;
+export async function findUserByEmail(
+  email: string,
+): Promise<(User & { passwordHash: string }) | null> {
+  const db = await getDb();
+  const row = await db.get<UserRow>(
+    "SELECT id, email, name, password_hash, role FROM users WHERE email = ?",
+    [email.trim().toLowerCase()],
+  );
   if (!row) return null;
   return { ...toUser(row), passwordHash: row.password_hash };
 }
 
-export function createUser(input: {
+export async function createUser(input: {
   email: string;
   name: string;
   password: string;
   role?: User["role"];
-}): User {
-  const db = getDb();
+}): Promise<User> {
+  const db = await getDb();
   const id = randomUUID();
-  db.prepare(
+  await db.run(
     "INSERT INTO users (id, email, name, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-  ).run(
-    id,
-    input.email.trim().toLowerCase(),
-    input.name.trim(),
-    hashPassword(input.password),
-    input.role ?? "family",
-    nowIso(),
+    [
+      id,
+      input.email.trim().toLowerCase(),
+      input.name.trim(),
+      hashPassword(input.password),
+      input.role ?? "family",
+      nowIso(),
+    ],
   );
   return { id, email: input.email.trim().toLowerCase(), name: input.name.trim(), role: input.role ?? "family" };
 }
 
 /** Verify the current password and set a new one. */
-export function changePassword(
+export async function changePassword(
   userId: string,
   currentPassword: string,
   newPassword: string,
-): { ok: boolean; error?: string } {
-  const row = getDb()
-    .prepare("SELECT password_hash FROM users WHERE id = ?")
-    .get(userId) as unknown as { password_hash: string } | undefined;
+): Promise<{ ok: boolean; error?: string }> {
+  const db = await getDb();
+  const row = await db.get<{ password_hash: string }>(
+    "SELECT password_hash FROM users WHERE id = ?",
+    [userId],
+  );
   if (!row) return { ok: false, error: "Account not found." };
   if (!verifyPassword(currentPassword, row.password_hash)) {
     return { ok: false, error: "Your current password does not match our records." };
@@ -177,9 +186,10 @@ export function changePassword(
   if (newPassword.length < 8) {
     return { ok: false, error: "Please choose a new password of at least 8 characters." };
   }
-  getDb()
-    .prepare("UPDATE users SET password_hash = ? WHERE id = ?")
-    .run(hashPassword(newPassword), userId);
+  await db.run("UPDATE users SET password_hash = ? WHERE id = ?", [
+    hashPassword(newPassword),
+    userId,
+  ]);
   return { ok: true };
 }
 
@@ -187,13 +197,13 @@ export function changePassword(
  * Seed the demo coordinator account on first use so the console at /admin
  * is reachable out of the box. Documented in the README.
  */
-export function ensureCoordinatorSeeded(): void {
-  const db = getDb();
-  const existing = db
-    .prepare("SELECT COUNT(*) AS n FROM users WHERE role = 'coordinator'")
-    .get() as unknown as { n: number };
-  if (existing.n > 0) return;
-  createUser({
+export async function ensureCoordinatorSeeded(): Promise<void> {
+  const db = await getDb();
+  const existing = await db.get<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM users WHERE role = 'coordinator'",
+  );
+  if ((existing?.n ?? 0) > 0) return;
+  await createUser({
     email: "coordinator@legacy.example",
     name: "Legacy Coordinator",
     password: process.env.LEGACY_ADMIN_PASSWORD || "walk-beside-families",

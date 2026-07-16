@@ -36,7 +36,7 @@ export async function updateMemorialAction(
   const livestreamUrl = sanitizeLivestreamUrl(formData.get("livestreamUrl"));
   const hasService = Boolean(kind && (serviceDate || venueName || city));
 
-  const ok = updateMemorialByOwner(slug, user.id, {
+  const ok = await updateMemorialByOwner(slug, user.id, {
     story: String(formData.get("story") ?? "")
       .split("\n")
       .map((line) => line.trim())
@@ -69,7 +69,7 @@ export async function unpublishOwnMemorialAction(formData: FormData): Promise<vo
   const user = await getCurrentUser();
   if (!user) return;
   const slug = String(formData.get("slug") ?? "");
-  if (unpublishMemorialByOwner(slug, user.id)) {
+  if (await unpublishMemorialByOwner(slug, user.id)) {
     revalidatePath("/memorials");
     revalidatePath("/account/dashboard");
     redirect("/account/dashboard");

@@ -18,21 +18,23 @@ export interface RequestMessageRow {
   created_at: string;
 }
 
-function getRequest(requestId: string): CoordinationRequestRow | null {
-  const row = getDb()
-    .prepare("SELECT * FROM coordination_requests WHERE id = ?")
-    .get(requestId) as unknown as CoordinationRequestRow | undefined;
+async function getRequest(requestId: string): Promise<CoordinationRequestRow | null> {
+  const db = await getDb();
+  const row = await db.get<CoordinationRequestRow>(
+    "SELECT * FROM coordination_requests WHERE id = ?",
+    [requestId],
+  );
   return row ?? null;
 }
 
 /** May this user read and write on this request's thread? */
-export function canAccessRequest(user: User, requestId: string): boolean {
-  const request = getRequest(requestId);
+export async function canAccessRequest(user: User, requestId: string): Promise<boolean> {
+  const request = await getRequest(requestId);
   if (!request) return false;
   if (user.role === "coordinator") return true;
   if (user.role === "family") return request.user_id === user.id;
   if (user.role === "partner") {
-    const link = getPartnerLink(user.id);
+    const link = await getPartnerLink(user.id);
     if (!link) return false;
     return link.kind === "funeral-home"
       ? request.funeral_home_id === link.ref_id
@@ -41,25 +43,27 @@ export function canAccessRequest(user: User, requestId: string): boolean {
   return false;
 }
 
-export function listRequestMessages(requestId: string): RequestMessageRow[] {
-  return getDb()
-    .prepare("SELECT * FROM request_messages WHERE request_id = ? ORDER BY created_at ASC")
-    .all(requestId) as unknown as RequestMessageRow[];
+export async function listRequestMessages(requestId: string): Promise<RequestMessageRow[]> {
+  const db = await getDb();
+  return db.all<RequestMessageRow>(
+    "SELECT * FROM request_messages WHERE request_id = ? ORDER BY created_at ASC",
+    [requestId],
+  );
 }
 
-export function addRequestMessage(input: {
+export async function addRequestMessage(input: {
   requestId: string;
   authorRole: RequestMessageRow["author_role"];
   authorName: string;
   body: string;
-}): RequestMessageRow {
+}): Promise<RequestMessageRow> {
   const id = randomUUID();
   const now = nowIso();
-  getDb()
-    .prepare(
-      "INSERT INTO request_messages (id, request_id, author_role, author_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-    )
-    .run(id, input.requestId, input.authorRole, input.authorName, input.body, now);
+  const db = await getDb();
+  await db.run(
+    "INSERT INTO request_messages (id, request_id, author_role, author_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+    [id, input.requestId, input.authorRole, input.authorName, input.body, now],
+  );
   return {
     id,
     request_id: input.requestId,

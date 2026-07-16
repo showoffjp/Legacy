@@ -108,12 +108,11 @@ function getTransport(): Transport {
 export async function sendMessage(msg: OutgoingMessage): Promise<string> {
   const status = await getTransport().deliver(msg);
   const id = randomUUID();
-  getDb()
-    .prepare(
-      `INSERT INTO messages (id, channel, recipient, subject, body, related_type, related_id, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .run(
+  const db = await getDb();
+  await db.run(
+    `INSERT INTO messages (id, channel, recipient, subject, body, related_type, related_id, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
       id,
       msg.channel,
       msg.recipient,
@@ -123,12 +122,12 @@ export async function sendMessage(msg: OutgoingMessage): Promise<string> {
       msg.relatedId ?? "",
       status,
       nowIso(),
-    );
+    ],
+  );
   return id;
 }
 
-export function listMessages(limit = 100): MessageRow[] {
-  return getDb()
-    .prepare("SELECT * FROM messages ORDER BY created_at DESC LIMIT ?")
-    .all(limit) as unknown as MessageRow[];
+export async function listMessages(limit = 100): Promise<MessageRow[]> {
+  const db = await getDb();
+  return db.all<MessageRow>("SELECT * FROM messages ORDER BY created_at DESC LIMIT ?", [limit]);
 }

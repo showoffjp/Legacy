@@ -166,10 +166,16 @@ function RequestCard({
 export default async function PortalPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "partner") redirect("/account");
-  const link = getPartnerLink(user.id);
+  const link = await getPartnerLink(user.id);
   if (!link) redirect("/account");
 
-  const requests = listRequestsForPartner(link);
+  const requests = await listRequestsForPartner(link);
+  const requestThreads = await Promise.all(
+    requests.map(async (request) => ({
+      request,
+      messages: await listRequestMessages(request.id),
+    })),
+  );
   const open = requests.filter((r) => r.status !== "completed").length;
 
   return (
@@ -213,12 +219,8 @@ export default async function PortalPage() {
             </p>
           </Card>
         ) : (
-          requests.map((request) => (
-            <RequestCard
-              key={request.id}
-              request={request}
-              messages={listRequestMessages(request.id)}
-            />
+          requestThreads.map(({ request, messages }) => (
+            <RequestCard key={request.id} request={request} messages={messages} />
           ))
         )}
         <p className="text-xs text-ink-faint">

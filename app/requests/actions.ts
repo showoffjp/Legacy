@@ -11,9 +11,9 @@ export async function postRequestMessage(formData: FormData): Promise<void> {
   const requestId = String(formData.get("requestId") ?? "");
   const body = String(formData.get("body") ?? "").trim().slice(0, 4000);
   if (!requestId || !body) return;
-  if (!canAccessRequest(user, requestId)) return;
+  if (!(await canAccessRequest(user, requestId))) return;
 
-  addRequestMessage({
+  await addRequestMessage({
     requestId,
     authorRole: user.role,
     authorName: user.name,

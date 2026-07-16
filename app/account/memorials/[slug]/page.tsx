@@ -21,8 +21,9 @@ export default async function ManageMemorialPage({
   const { slug } = await params;
   const user = await getCurrentUser();
   if (!user) redirect("/account");
-  const memorial = getMemorialForOwner(slug, user.id);
+  const memorial = await getMemorialForOwner(slug, user.id);
   if (!memorial) notFound();
+  const pledges = await listGiftPledges(memorial.slug);
 
   return (
     <div className="pb-24">
@@ -49,7 +50,6 @@ export default async function ManageMemorialPage({
         <MemorialEditForm memorial={memorial} />
 
         {(() => {
-          const pledges = listGiftPledges(memorial.slug);
           if (pledges.length === 0) return null;
           const total = pledges.reduce((sum, p) => sum + p.amount_usd, 0);
           return (

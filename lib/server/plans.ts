@@ -14,18 +14,24 @@ interface PlanRow {
  */
 
 /** The user whose plan row this user reads and writes (self, or the owner they joined). */
-export function resolvePlanOwner(userId: string): string {
-  const membership = getDb()
-    .prepare("SELECT owner_id FROM plan_members WHERE user_id = ?")
-    .get(userId) as unknown as { owner_id: string } | undefined;
+export async function resolvePlanOwner(userId: string): Promise<string> {
+  const db = await getDb();
+  const membership = await db.get<{ owner_id: string }>(
+    "SELECT owner_id FROM plan_members WHERE user_id = ?",
+    [userId],
+  );
   return membership?.owner_id ?? userId;
 }
 
-export function getPlanForUser(userId: string): { data: unknown; updatedAt: string } | null {
-  const ownerId = resolvePlanOwner(userId);
-  const row = getDb()
-    .prepare("SELECT user_id, data, updated_at, share_code FROM plans WHERE user_id = ?")
-    .get(ownerId) as unknown as PlanRow | undefined;
+export async function getPlanForUser(
+  userId: string,
+): Promise<{ data: unknown; updatedAt: string } | null> {
+  const ownerId = await resolvePlanOwner(userId);
+  const db = await getDb();
+  const row = await db.get<PlanRow>(
+    "SELECT user_id, data, updated_at, share_code FROM plans WHERE user_id = ?",
+    [ownerId],
+  );
   if (!row) return null;
   try {
     return { data: JSON.parse(row.data), updatedAt: row.updated_at };
@@ -34,15 +40,15 @@ export function getPlanForUser(userId: string): { data: unknown; updatedAt: stri
   }
 }
 
-export function upsertPlanForUser(userId: string, data: unknown): string {
-  const ownerId = resolvePlanOwner(userId);
+export async function upsertPlanForUser(userId: string, data: unknown): Promise<string> {
+  const ownerId = await resolvePlanOwner(userId);
   const updatedAt = nowIso();
-  getDb()
-    .prepare(
-      `INSERT INTO plans (user_id, data, updated_at) VALUES (?, ?, ?)
-       ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
-    )
-    .run(ownerId, JSON.stringify(data), updatedAt);
+  const db = await getDb();
+  await db.run(
+    `INSERT INTO plans (user_id, data, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
+    [ownerId, JSON.stringify(data), updatedAt],
+  );
   return updatedAt;
 }
 
@@ -59,45 +65,50 @@ function makeShareCode(): string {
 }
 
 /** The family code for this owner's plan, created (with the plan row) if needed. */
-export function getOrCreateShareCode(ownerId: string): string {
-  const db = getDb();
-  const row = db
-    .prepare("SELECT share_code FROM plans WHERE user_id = ?")
-    .get(ownerId) as unknown as { share_code: string | null } | undefined;
+export async function getOrCreateShareCode(ownerId: string): Promise<string> {
+  const db = await getDb();
+  const row = await db.get<{ share_code: string | null }>(
+    "SELECT share_code FROM plans WHERE user_id = ?",
+    [ownerId],
+  );
   if (row?.share_code) return row.share_code;
 
   const code = makeShareCode();
   if (row) {
-    db.prepare("UPDATE plans SET share_code = ? WHERE user_id = ?").run(code, ownerId);
+    await db.run("UPDATE plans SET share_code = ? WHERE user_id = ?", [code, ownerId]);
   } else {
-    db.prepare(
+    await db.run(
       "INSERT INTO plans (user_id, data, updated_at, share_code) VALUES (?, ?, ?, ?)",
-    ).run(ownerId, JSON.stringify(EMPTY_PLAN), nowIso(), code);
+      [ownerId, JSON.stringify(EMPTY_PLAN), nowIso(), code],
+    );
   }
   return code;
 }
 
-export function joinPlanByCode(
+export async function joinPlanByCode(
   userId: string,
   code: string,
-): { ok: boolean; error?: string } {
-  const db = getDb();
-  const owner = db
-    .prepare("SELECT user_id FROM plans WHERE share_code = ?")
-    .get(code.trim().toUpperCase()) as unknown as { user_id: string } | undefined;
+): Promise<{ ok: boolean; error?: string }> {
+  const db = await getDb();
+  const owner = await db.get<{ user_id: string }>(
+    "SELECT user_id FROM plans WHERE share_code = ?",
+    [code.trim().toUpperCase()],
+  );
   if (!owner) return { ok: false, error: "That family code was not found — check it and try again." };
   if (owner.user_id === userId) {
     return { ok: false, error: "That is your own plan's code — share it with family instead." };
   }
-  db.prepare(
+  await db.run(
     `INSERT INTO plan_members (user_id, owner_id, joined_at) VALUES (?, ?, ?)
      ON CONFLICT(user_id) DO UPDATE SET owner_id = excluded.owner_id, joined_at = excluded.joined_at`,
-  ).run(userId, owner.user_id, nowIso());
+    [userId, owner.user_id, nowIso()],
+  );
   return { ok: true };
 }
 
-export function leaveSharedPlan(userId: string): void {
-  getDb().prepare("DELETE FROM plan_members WHERE user_id = ?").run(userId);
+export async function leaveSharedPlan(userId: string): Promise<void> {
+  const db = await getDb();
+  await db.run("DELETE FROM plan_members WHERE user_id = ?", [userId]);
 }
 
 export interface PlanMemberInfo {
@@ -106,22 +117,22 @@ export interface PlanMemberInfo {
 }
 
 /** Who has joined this owner's plan. */
-export function listPlanMembers(ownerId: string): PlanMemberInfo[] {
-  return getDb()
-    .prepare(
-      `SELECT u.email, u.name FROM plan_members m JOIN users u ON u.id = m.user_id
-       WHERE m.owner_id = ? ORDER BY m.joined_at`,
-    )
-    .all(ownerId) as unknown as PlanMemberInfo[];
+export async function listPlanMembers(ownerId: string): Promise<PlanMemberInfo[]> {
+  const db = await getDb();
+  return db.all<PlanMemberInfo>(
+    `SELECT u.email, u.name FROM plan_members m JOIN users u ON u.id = m.user_id
+     WHERE m.owner_id = ? ORDER BY m.joined_at`,
+    [ownerId],
+  );
 }
 
 /** The owner this user has joined, if any. */
-export function joinedPlanOwner(userId: string): PlanMemberInfo | null {
-  const row = getDb()
-    .prepare(
-      `SELECT u.email, u.name FROM plan_members m JOIN users u ON u.id = m.owner_id
-       WHERE m.user_id = ?`,
-    )
-    .get(userId) as unknown as PlanMemberInfo | undefined;
+export async function joinedPlanOwner(userId: string): Promise<PlanMemberInfo | null> {
+  const db = await getDb();
+  const row = await db.get<PlanMemberInfo>(
+    `SELECT u.email, u.name FROM plan_members m JOIN users u ON u.id = m.owner_id
+     WHERE m.user_id = ?`,
+    [userId],
+  );
   return row ?? null;
 }

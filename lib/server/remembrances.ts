@@ -141,41 +141,42 @@ export async function createRemembrance(
   }
 
   const id = randomUUID();
-  const db = getDb();
-  db.prepare(
+  const db = await getDb();
+  await db.run(
     `INSERT INTO remembrances
        (id, user_id, loved_one_name, death_date, recipient_name, recipient_email, active, created_at)
      VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
-  ).run(
-    id,
-    input.userId,
-    input.lovedOneName,
-    input.deathDate,
-    input.recipientName,
-    input.recipientEmail,
-    nowIso(),
+    [
+      id,
+      input.userId,
+      input.lovedOneName,
+      input.deathDate,
+      input.recipientName,
+      input.recipientEmail,
+      nowIso(),
+    ],
   );
 
   const todayStr = isoDay(today);
   const events: ScheduledEvent[] = [];
-  const insert = db.prepare(
-    `INSERT INTO remembrance_events
-       (id, remembrance_id, send_on, title, note, verse_text, verse_ref, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-  );
   for (const milestone of MILESTONES) {
     const when =
       milestone.afterDays === null ? firstChristmasAfter(death) : addDays(death, milestone.afterDays);
     const sendOn = isoDay(when);
     if (sendOn <= todayStr) continue; // that milestone has already passed
-    insert.run(
-      randomUUID(),
-      id,
-      sendOn,
-      milestone.title,
-      milestone.note(input.lovedOneName),
-      milestone.verseText,
-      milestone.verseRef,
+    await db.run(
+      `INSERT INTO remembrance_events
+         (id, remembrance_id, send_on, title, note, verse_text, verse_ref, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [
+        randomUUID(),
+        id,
+        sendOn,
+        milestone.title,
+        milestone.note(input.lovedOneName),
+        milestone.verseText,
+        milestone.verseRef,
+      ],
     );
     events.push({ sendOn, title: milestone.title });
   }
@@ -203,17 +204,23 @@ function unsubscribeUrl(id: string): string {
 }
 
 /** End a remembrance by its (unguessable) id — the unsubscribe path. */
-export function deactivateRemembrance(id: string): boolean {
-  const result = getDb().prepare("UPDATE remembrances SET active = 0 WHERE id = ?").run(id);
-  return Number(result.changes) > 0;
+export async function deactivateRemembrance(id: string): Promise<boolean> {
+  const db = await getDb();
+  const result = await db.run("UPDATE remembrances SET active = 0 WHERE id = ?", [id]);
+  return result.changes > 0;
 }
 
 /** End a remembrance from the dashboard — only by its owner. */
-export function deactivateRemembranceForUser(id: string, userId: string): boolean {
-  const result = getDb()
-    .prepare("UPDATE remembrances SET active = 0 WHERE id = ? AND user_id = ?")
-    .run(id, userId);
-  return Number(result.changes) > 0;
+export async function deactivateRemembranceForUser(
+  id: string,
+  userId: string,
+): Promise<boolean> {
+  const db = await getDb();
+  const result = await db.run(
+    "UPDATE remembrances SET active = 0 WHERE id = ? AND user_id = ?",
+    [id, userId],
+  );
+  return result.changes > 0;
 }
 
 export interface RemembranceSummary {
@@ -225,32 +232,32 @@ export interface RemembranceSummary {
   nextEvent: { sendOn: string; title: string } | null;
 }
 
-export function listRemembrancesForUser(userId: string): RemembranceSummary[] {
-  const rows = getDb()
-    .prepare(
-      "SELECT * FROM remembrances WHERE user_id = ? AND active = 1 ORDER BY created_at DESC",
-    )
-    .all(userId) as unknown as RemembranceRow[];
-  return rows.map((row) => {
-    const sent = getDb()
-      .prepare(
-        "SELECT COUNT(*) AS n FROM remembrance_events WHERE remembrance_id = ? AND status = 'sent'",
-      )
-      .get(row.id) as unknown as { n: number };
-    const next = getDb()
-      .prepare(
-        "SELECT send_on, title FROM remembrance_events WHERE remembrance_id = ? AND status = 'pending' ORDER BY send_on ASC LIMIT 1",
-      )
-      .get(row.id) as unknown as { send_on: string; title: string } | undefined;
-    return {
+export async function listRemembrancesForUser(userId: string): Promise<RemembranceSummary[]> {
+  const db = await getDb();
+  const rows = await db.all<RemembranceRow>(
+    "SELECT * FROM remembrances WHERE user_id = ? AND active = 1 ORDER BY created_at DESC",
+    [userId],
+  );
+  const summaries: RemembranceSummary[] = [];
+  for (const row of rows) {
+    const sent = await db.get<{ n: number }>(
+      "SELECT COUNT(*) AS n FROM remembrance_events WHERE remembrance_id = ? AND status = 'sent'",
+      [row.id],
+    );
+    const next = await db.get<{ send_on: string; title: string }>(
+      "SELECT send_on, title FROM remembrance_events WHERE remembrance_id = ? AND status = 'pending' ORDER BY send_on ASC LIMIT 1",
+      [row.id],
+    );
+    summaries.push({
       id: row.id,
       lovedOneName: row.loved_one_name,
       deathDate: row.death_date,
       recipientEmail: row.recipient_email,
-      sentCount: sent.n,
+      sentCount: sent?.n ?? 0,
       nextEvent: next ? { sendOn: next.send_on, title: next.title } : null,
-    };
-  });
+    });
+  }
+  return summaries;
 }
 
 /**
@@ -259,16 +266,8 @@ export function listRemembrancesForUser(userId: string): RemembranceSummary[] {
  */
 export async function dispatchDueRemembrances(): Promise<number> {
   const todayStr = isoDay(new Date());
-  const due = getDb()
-    .prepare(
-      `SELECT e.id AS event_id, e.title, e.note, e.verse_text, e.verse_ref,
-              r.id AS remembrance_id, r.loved_one_name, r.recipient_name, r.recipient_email
-       FROM remembrance_events e
-       JOIN remembrances r ON r.id = e.remembrance_id
-       WHERE e.status = 'pending' AND r.active = 1 AND e.send_on <= ?
-       ORDER BY e.send_on ASC`,
-    )
-    .all(todayStr) as unknown as {
+  const db = await getDb();
+  const due = await db.all<{
     event_id: string;
     title: string;
     note: string;
@@ -278,11 +277,16 @@ export async function dispatchDueRemembrances(): Promise<number> {
     loved_one_name: string;
     recipient_name: string;
     recipient_email: string;
-  }[];
-
-  const markSent = getDb().prepare(
-    "UPDATE remembrance_events SET status = 'sent', sent_at = ? WHERE id = ?",
+  }>(
+    `SELECT e.id AS event_id, e.title, e.note, e.verse_text, e.verse_ref,
+            r.id AS remembrance_id, r.loved_one_name, r.recipient_name, r.recipient_email
+     FROM remembrance_events e
+     JOIN remembrances r ON r.id = e.remembrance_id
+     WHERE e.status = 'pending' AND r.active = 1 AND e.send_on <= ?
+     ORDER BY e.send_on ASC`,
+    [todayStr],
   );
+
   for (const event of due) {
     await sendMessage({
       channel: "email",
@@ -292,7 +296,10 @@ export async function dispatchDueRemembrances(): Promise<number> {
       relatedType: "remembrance",
       relatedId: event.remembrance_id,
     });
-    markSent.run(nowIso(), event.event_id);
+    await db.run("UPDATE remembrance_events SET status = 'sent', sent_at = ? WHERE id = ?", [
+      nowIso(),
+      event.event_id,
+    ]);
   }
   return due.length;
 }

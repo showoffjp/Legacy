@@ -136,24 +136,23 @@ export async function confirmStripeSession(
   return false;
 }
 
-export function createOrder(input: {
+export async function createOrder(input: {
   userId: string | null;
   packageId: string;
   contactName: string;
   contactEmail: string;
-}): OrderRow | null {
+}): Promise<OrderRow | null> {
   const pkg = PACKAGES.find((p) => p.id === input.packageId);
   if (!pkg) return null;
   const id = randomUUID();
   const reference = makeReference("ORD");
   const now = nowIso();
-  getDb()
-    .prepare(
-      `INSERT INTO orders
-         (id, reference, user_id, package_id, package_name, amount_usd, contact_name, contact_email, provider, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
-    )
-    .run(
+  const db = await getDb();
+  await db.run(
+    `INSERT INTO orders
+       (id, reference, user_id, package_id, package_name, amount_usd, contact_name, contact_email, provider, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
+    [
       id,
       reference,
       input.userId,
@@ -164,7 +163,8 @@ export function createOrder(input: {
       input.contactEmail,
       getPaymentProvider().name,
       now,
-    );
+    ],
+  );
   return getOrderByReference(reference);
 }
 
@@ -184,13 +184,12 @@ export async function createAssignmentOrder(input: {
   if (!pkg) return null;
   const id = randomUUID();
   const reference = makeReference("ORD");
-  getDb()
-    .prepare(
-      `INSERT INTO orders
-         (id, reference, user_id, package_id, package_name, amount_usd, contact_name, contact_email, provider, status, created_at, funding_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'insurance-assignment', 'assignment-pending', ?, ?)`,
-    )
-    .run(
+  const db = await getDb();
+  await db.run(
+    `INSERT INTO orders
+       (id, reference, user_id, package_id, package_name, amount_usd, contact_name, contact_email, provider, status, created_at, funding_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'insurance-assignment', 'assignment-pending', ?, ?)`,
+    [
       id,
       reference,
       input.userId,
@@ -201,7 +200,8 @@ export async function createAssignmentOrder(input: {
       input.contactEmail,
       nowIso(),
       JSON.stringify(input.funding),
-    );
+    ],
+  );
 
   await sendMessage({
     channel: "email",
@@ -220,44 +220,43 @@ export const ASSIGNMENT_STATUSES = ["assignment-pending", "assignment-verified",
 
 export async function setAssignmentStatus(id: string, status: string): Promise<boolean> {
   if (!(ASSIGNMENT_STATUSES as readonly string[]).includes(status)) return false;
-  const row = getDb().prepare("SELECT * FROM orders WHERE id = ?").get(id) as
-    | unknown
-    | undefined;
-  const order = row as OrderRow | undefined;
+  const db = await getDb();
+  const order = await db.get<OrderRow>("SELECT * FROM orders WHERE id = ?", [id]);
   if (!order || order.provider !== "insurance-assignment") return false;
   if (status === "paid") {
     await markOrderPaid(order.reference);
     return true;
   }
-  getDb().prepare("UPDATE orders SET status = ? WHERE id = ?").run(status, id);
+  await db.run("UPDATE orders SET status = ? WHERE id = ?", [status, id]);
   return true;
 }
 
-export function getOrderByReference(reference: string): OrderRow | null {
-  const row = getDb()
-    .prepare("SELECT * FROM orders WHERE reference = ?")
-    .get(reference) as unknown as OrderRow | undefined;
+export async function getOrderByReference(reference: string): Promise<OrderRow | null> {
+  const db = await getDb();
+  const row = await db.get<OrderRow>("SELECT * FROM orders WHERE reference = ?", [reference]);
   return row ?? null;
 }
 
-export function listOrdersForUser(userId: string): OrderRow[] {
-  return getDb()
-    .prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC")
-    .all(userId) as unknown as OrderRow[];
+export async function listOrdersForUser(userId: string): Promise<OrderRow[]> {
+  const db = await getDb();
+  return db.all<OrderRow>("SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC", [
+    userId,
+  ]);
 }
 
-export function listOrders(): OrderRow[] {
-  return getDb()
-    .prepare("SELECT * FROM orders ORDER BY created_at DESC")
-    .all() as unknown as OrderRow[];
+export async function listOrders(): Promise<OrderRow[]> {
+  const db = await getDb();
+  return db.all<OrderRow>("SELECT * FROM orders ORDER BY created_at DESC");
 }
 
 export async function markOrderPaid(reference: string): Promise<OrderRow | null> {
-  const order = getOrderByReference(reference);
+  const order = await getOrderByReference(reference);
   if (!order || order.status === "paid") return order;
-  getDb()
-    .prepare("UPDATE orders SET status = 'paid', paid_at = ? WHERE reference = ?")
-    .run(nowIso(), reference);
+  const db = await getDb();
+  await db.run("UPDATE orders SET status = 'paid', paid_at = ? WHERE reference = ?", [
+    nowIso(),
+    reference,
+  ]);
 
   await sendMessage({
     channel: "email",

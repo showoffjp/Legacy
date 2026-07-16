@@ -113,12 +113,32 @@ export default async function DashboardPage() {
   if (!user) redirect("/account");
 
   const firstName = user.name.trim().split(/\s+/)[0] || user.name;
-  const planRecord = getPlanForUser(user.id);
+  const planRecord = await getPlanForUser(user.id);
   const plan = planRecord ? (planRecord.data as ServicePlan) : null;
-  const requests = listCoordinationRequestsForUser(user.id);
-  const orders = listOrdersForUser(user.id);
-  const memorials = listMemorialsForOwner(user.id);
-  const remembrances = listRemembrancesForUser(user.id);
+  const requests = await listCoordinationRequestsForUser(user.id);
+  const orders = await listOrdersForUser(user.id);
+  const memorials = await listMemorialsForOwner(user.id);
+  const remembrances = await listRemembrancesForUser(user.id);
+
+  // Everything the JSX below reads, gathered up front.
+  const joined = user.role === "family" ? await joinedPlanOwner(user.id) : null;
+  const shareCode = !joined && plan ? await getOrCreateShareCode(user.id) : null;
+  const members = joined ? [] : await listPlanMembers(user.id);
+  const memorialCards = await Promise.all(
+    memorials.map(async (memorial) => ({
+      memorial,
+      rsvps: await rsvpSummary(memorial.slug),
+      condolences: await condolenceCount(memorial.slug),
+      meals: await mealSummary(memorial.slug),
+      gifts: await giftSummary(memorial.slug),
+    })),
+  );
+  const requestThreads = await Promise.all(
+    requests.map(async (request) => ({
+      request,
+      messages: await listRequestMessages(request.id),
+    })),
+  );
 
   return (
     <div className="pb-24">
@@ -218,7 +238,6 @@ export default async function DashboardPage() {
 
         <DashboardSection title="Planning together">
           {(() => {
-            const joined = user.role === "family" ? joinedPlanOwner(user.id) : null;
             if (joined) {
               return (
                 <Card className="p-7">
@@ -237,8 +256,7 @@ export default async function DashboardPage() {
                 </Card>
               );
             }
-            const code = plan ? getOrCreateShareCode(user.id) : null;
-            const members = listPlanMembers(user.id);
+            const code = shareCode;
             return (
               <Card className="p-7">
                 <p className="text-sm leading-relaxed text-ink-soft">
@@ -275,10 +293,7 @@ export default async function DashboardPage() {
         {memorials.length > 0 ? (
           <DashboardSection title="Their memorial pages">
             <div className="flex flex-col gap-4">
-              {memorials.map((memorial) => {
-                const rsvps = rsvpSummary(memorial.slug);
-                const condolences = condolenceCount(memorial.slug);
-                const meals = mealSummary(memorial.slug);
+              {memorialCards.map(({ memorial, rsvps, condolences, meals, gifts }) => {
                 return (
                   <Card key={memorial.slug} className="p-6">
                     <div className="flex flex-wrap items-center justify-between gap-4">
@@ -298,12 +313,9 @@ export default async function DashboardPage() {
                           {meals.dishes === 1
                             ? `1 dish promised for the repast (serves ~${meals.serves})`
                             : `${meals.dishes} dishes promised for the repast (serves ~${meals.serves})`}
-                          {(() => {
-                            const gifts = giftSummary(memorial.slug);
-                            return gifts.gifts > 0
-                              ? ` · ${gifts.gifts === 1 ? "1 memorial gift" : `${gifts.gifts} memorial gifts`}`
-                              : "";
-                          })()}
+                          {gifts.gifts > 0
+                            ? ` · ${gifts.gifts === 1 ? "1 memorial gift" : `${gifts.gifts} memorial gifts`}`
+                            : ""}
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -356,7 +368,7 @@ export default async function DashboardPage() {
         <DashboardSection title="Coordination requests">
           {requests.length > 0 ? (
             <div className="flex flex-col gap-4">
-              {requests.map((request) => {
+              {requestThreads.map(({ request, messages }) => {
                 const lovedOne = lovedOneFromPlanJson(request.plan_json);
                 return (
                   <Card key={request.id} className="p-6">
@@ -380,7 +392,7 @@ export default async function DashboardPage() {
                     </p>
                     <RequestThread
                       requestId={request.id}
-                      messages={listRequestMessages(request.id)}
+                      messages={messages}
                       viewerRole="family"
                     />
                   </Card>
