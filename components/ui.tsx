@@ -18,20 +18,20 @@ export function Container({
 
 const buttonStyles = {
   primary:
-    "bg-gold text-white hover:bg-gold-deep shadow-soft",
-  dark: "bg-ink text-parchment hover:bg-night",
+    "btn-sheen bg-gradient-to-b from-[#bd9a54] to-[#8f7440] text-white shadow-[0_2px_10px_rgba(163,131,63,0.35)] hover:shadow-[0_6px_20px_rgba(163,131,63,0.45)] hover:-translate-y-px active:translate-y-0",
+  dark: "btn-sheen bg-gradient-to-b from-[#2b3446] to-[#171d2b] text-parchment shadow-[0_2px_10px_rgba(23,29,43,0.35)] hover:shadow-[0_6px_18px_rgba(23,29,43,0.45)] hover:-translate-y-px active:translate-y-0",
   outline:
-    "border border-line bg-white/60 text-ink hover:border-gold hover:text-gold-deep",
+    "border border-gold/40 bg-white/70 text-gold-deep shadow-soft hover:border-gold hover:bg-gold-pale/40 hover:-translate-y-px active:translate-y-0",
   /** For buttons that sit on dark (night) backgrounds. */
   "outline-inverse":
-    "border border-white/25 bg-transparent text-parchment hover:border-gold-pale hover:bg-white/10 hover:text-gold-pale",
+    "border border-gold-pale/40 bg-white/5 text-parchment hover:border-gold-pale hover:bg-gold-pale/15 hover:text-gold-pale hover:-translate-y-px active:translate-y-0",
   ghost: "text-gold-deep hover:bg-gold-pale/50",
 } as const;
 
 type ButtonVariant = keyof typeof buttonStyles;
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium tracking-wide transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium tracking-wide transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50";
 
 export function ButtonLink({
   variant = "primary",
@@ -157,6 +157,33 @@ export function Field({
       {hint ? <span className="mt-1 block text-xs text-ink-faint">{hint}</span> : null}
     </label>
   );
+}
+
+const MEDALLION_TONES = ["gold", "sage", "rose"] as const;
+export type MedallionTone = (typeof MEDALLION_TONES)[number];
+
+/**
+ * A colored medallion behind an icon — dependable warmth even on devices
+ * that render emoji as flat monochrome glyphs.
+ */
+export function Medallion({
+  icon,
+  tone = "gold",
+  className = "",
+}: {
+  icon: string;
+  tone?: MedallionTone;
+  className?: string;
+}) {
+  return (
+    <span aria-hidden className={`medallion medallion-${tone} ${className}`}>
+      {icon}
+    </span>
+  );
+}
+
+export function medallionTone(index: number): MedallionTone {
+  return MEDALLION_TONES[index % MEDALLION_TONES.length];
 }
 
 export function formatUsd(amount: number): string {

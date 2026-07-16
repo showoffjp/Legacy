@@ -11,6 +11,9 @@
   --color-gold-deep: #8a6d31;
   --color-gold-pale: #ecdfc2;
   --color-sage: #6f7f6a;
+  --color-sage-pale: #dde5da;
+  --color-rose: #9d6b64;
+  --color-rose-pale: #eddcd7;
   --color-night: #171d2b;
   --color-night-soft: #202839;
   --color-line: #e2dbca;
@@ -53,6 +56,103 @@ body {
   width: 2.5rem;
   background: currentColor;
   opacity: 0.6;
+}
+
+/* ————— Buttons: gradient depth + a sheen that sweeps on hover ————— */
+
+.btn-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.btn-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+.btn-sheen:hover::after {
+  transition: transform 0.65s ease;
+  transform: translateX(130%);
+}
+
+/* ————— Card accents: a colored hairline that grows on hover ————— */
+
+.card-accent {
+  position: relative;
+  overflow: hidden;
+}
+.card-accent::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-grad, linear-gradient(90deg, #a3833f, #d9bc7a));
+  transform: scaleX(0.35);
+  transform-origin: left;
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.card-accent:hover::before {
+  transform: scaleX(1);
+}
+.card-accent-gold {
+  --accent-grad: linear-gradient(90deg, #a3833f, #dcc084);
+}
+.card-accent-sage {
+  --accent-grad: linear-gradient(90deg, #6f7f6a, #a8bda1);
+}
+.card-accent-rose {
+  --accent-grad: linear-gradient(90deg, #9d6b64, #d3a79f);
+}
+
+/* ————— Icon medallions: reliable color even where emoji render flat ————— */
+
+.medallion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 9999px;
+  font-size: 1.5rem;
+  line-height: 1;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.65),
+    0 2px 8px rgba(34, 41, 58, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.medallion-gold {
+  background: linear-gradient(140deg, #f3e6c8, #dcc084 55%, #c4a35e);
+}
+.medallion-sage {
+  background: linear-gradient(140deg, #e4ecdf, #b9cbb1 55%, #93ab89);
+}
+.medallion-rose {
+  background: linear-gradient(140deg, #f4e3de, #ddb4ab 55%, #c1857b);
+}
+
+/* Pill links inside cards */
+.pill-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  border-radius: 9999px;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--color-gold-deep);
+  background: color-mix(in srgb, var(--color-gold-pale) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-gold) 30%, transparent);
+  transition: all 0.25s ease;
+}
+.pill-link:hover {
+  background: var(--color-gold-pale);
+  border-color: var(--color-gold);
+  transform: translateX(2px);
 }
 
 /* ————— Reveal-on-scroll (active only when html.motion-ok) ————— */

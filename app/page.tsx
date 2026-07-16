@@ -5,8 +5,10 @@ import {
   ButtonLink,
   Card,
   Container,
+  Medallion,
   SectionHeading,
   VerseBlock,
+  medallionTone,
 } from "@/components/ui";
 import { Reveal } from "@/components/reveal";
 
@@ -182,17 +184,14 @@ export default function HomePage() {
           <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {PILLARS.map((p, i) => (
               <Reveal key={p.title} delay={(i % 3) * 110} className="h-full">
-                <Card className="group flex h-full flex-col p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lift">
-                  <span aria-hidden className="soft-float inline-block w-fit text-3xl">
-                    {p.icon}
-                  </span>
+                <Card
+                  className={`card-accent card-accent-${medallionTone(i)} group flex h-full flex-col p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lift`}
+                >
+                  <Medallion icon={p.icon} tone={medallionTone(i)} className="soft-float" />
                   <h3 className="mt-4 font-display text-2xl font-semibold text-ink">{p.title}</h3>
                   <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-soft">{p.text}</p>
-                  <Link
-                    href={p.href}
-                    className="mt-5 text-sm font-medium text-gold-deep transition-colors group-hover:text-gold"
-                  >
-                    {p.cta}{" "}
+                  <Link href={p.href} className="pill-link mt-5">
+                    {p.cta}
                     <span
                       aria-hidden
                       className="inline-block transition-transform duration-300 group-hover:translate-x-1"
@@ -223,8 +222,10 @@ export default function HomePage() {
           <ol className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((s, i) => (
               <Reveal as="li" key={s.n} delay={i * 130} className="h-full">
-                <Card className="h-full p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lift">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-pale/70 font-display text-xl font-semibold text-gold-deep">
+                <Card
+                  className={`card-accent card-accent-${medallionTone(i)} h-full p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-lift`}
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-b from-[#bd9a54] to-[#8f7440] font-display text-xl font-semibold text-white shadow-[0_2px_8px_rgba(163,131,63,0.4)]">
                     {s.n}
                   </span>
                   <h3 className="mt-4 font-display text-xl font-semibold text-ink">{s.title}</h3>
