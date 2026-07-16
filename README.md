@@ -163,15 +163,16 @@ The year after the service, carried together:
 |---|---|
 | Framework | Next.js 15 (App Router), React 19, TypeScript (strict) |
 | Styling | Tailwind CSS v4, custom parchment/ink/gold design tokens, Cormorant Garamond + Inter |
-| Data | SQLite via Node's built-in `node:sqlite` — zero native dependencies — in `./data` (gitignored) |
+| Data | One async data layer, two drivers: embedded SQLite (Node's built-in `node:sqlite`, zero native deps, `./data`) by default; **hosted Postgres** (Neon/Supabase/RDS) the moment `DATABASE_URL` is set — same SQL, `?`→`$n` translated, TLS verified |
 | Auth | scrypt password hashing, HMAC-signed httpOnly session cookies |
 | Messaging | `Transport` interface (`lib/server/notify.ts`) — outbox now, SMTP/Twilio later |
 | Payments | `PaymentProvider` interface (`lib/server/payments.ts`) — demo now, Stripe later |
 | Client state | The family's plan lives in `localStorage` and syncs to the account when signed in |
 | Tests | Playwright E2E suite in `e2e/` (nine specs), run by GitHub Actions CI on every push/PR |
 
-The interfaces are the architecture: swapping SQLite for Postgres, the outbox for Resend/Twilio,
-or the demo provider for Stripe touches only `lib/server/` — no page changes.
+The interfaces are the architecture: the SQLite↔Postgres swap, the outbox↔Resend/Twilio swap,
+and the demo↔Stripe swap all live behind `lib/server/` — no page changes, each activated by an
+environment variable. The full E2E suite passes identically on both database drivers.
 
 ## Getting started
 
@@ -200,6 +201,7 @@ moment its keys exist, and reverts to demo/outbox behavior without them:
 
 | Variable(s) | What turns on |
 |---|---|
+| `DATABASE_URL` | Every server-side record — accounts, plans, coordination requests, memorials and their guestbooks/RSVPs/meals/gifts, orders, remembrances, message threads — moves to hosted Postgres and becomes **permanent across serverless cold starts**. Any Postgres 14+ works (Neon and Supabase have free tiers); use the connection string with `sslmode=require` and the schema creates itself on first touch. Unset, the embedded SQLite carries on exactly as before. |
 | `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` | Checkout moves to Stripe's hosted payment page; the webhook at `/api/stripe/webhook` (subscribe it to `checkout.session.completed`) marks orders paid, with a session check on the receipt page so families never wait on webhook latency. The in-app demo confirmation stops being able to complete orders. |
 | `RESEND_API_KEY` (+ optional `EMAIL_FROM`) | Outbox emails to families and partners are actually delivered via Resend; the console outbox shows sent/failed status. Placeholder `.example.com` addresses stay queued. |
 | `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN` + `TWILIO_FROM` | Outbox SMS (family confirmations) delivered via Twilio. |
@@ -227,12 +229,13 @@ it builds automatically:
    branch — Vercel also creates preview deployments for every PR automatically.
 3. Add environment variables: `LEGACY_SECRET` (any long random string) and `COOKIE_SECURE=1`.
 
-**Preview caveat:** Vercel's filesystem is ephemeral, so Legacy automatically falls back to
-`/tmp` for its database there. Everything on-device works perfectly (the whole planning wizard,
-printouts, tribute studio, checklist); server-side records — accounts, published memorials,
-coordination requests, orders — work within a session but reset between serverless cold starts.
-For a persistent deployment use the Dockerfile above, or point `lib/server/` at a hosted
-database (first item on the roadmap).
+**Making Vercel permanent:** without a database URL, Vercel's ephemeral filesystem means
+server-side records (accounts, published memorials, coordination requests, orders) work within
+a session but reset between cold starts — everything on-device is unaffected. To make it all
+permanent, create a free Postgres database (e.g. [Neon](https://neon.tech) or
+[Supabase](https://supabase.com)) and add its connection string as `DATABASE_URL` in
+**Settings → Environment Variables**. That's the whole migration — the schema creates itself
+on first touch.
 
 ---
 
@@ -240,8 +243,9 @@ database (first item on the roadmap).
 
 ### Going live (near term)
 
-- **Hosted database** — swap SQLite for Postgres (Neon/Supabase/RDS) behind the existing
-  `lib/server/` helpers; migrations and backups.
+- **Hosted database, deepened** — Postgres behind `DATABASE_URL` ships today (schema
+  self-creates, full E2E suite passes on both drivers); next: managed migrations and automated
+  backups.
 - **Real payments, deepened** — Stripe Checkout + webhooks and life-insurance assignment intake
   ship today; next: payment plans and assignment e-signature with insurer API verification.
 - **Real messaging** — SMTP (Resend/Postmark) and Twilio SMS transports behind `Transport`, with

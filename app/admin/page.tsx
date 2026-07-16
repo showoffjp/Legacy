@@ -15,7 +15,7 @@ import {
   rsvpSummary,
 } from "@/lib/server/memorials";
 import { listPortalAccounts } from "@/lib/server/portal";
-import { listRequestMessages } from "@/lib/server/messaging";
+import { listRequestMessages, type RequestMessageRow } from "@/lib/server/messaging";
 import { RequestThread } from "@/components/request-thread";
 import { InvitePartnerForm } from "@/components/admin/invite-partner-form";
 import { FUNERAL_HOMES } from "@/lib/data/funeral-homes";
@@ -215,7 +215,13 @@ function PlanDetails({ plan }: { plan: Partial<ServicePlan> }) {
   );
 }
 
-function RequestCard({ request }: { request: CoordinationRequestRow }) {
+function RequestCard({
+  request,
+  thread,
+}: {
+  request: CoordinationRequestRow;
+  thread: RequestMessageRow[];
+}) {
   const plan = parsePlan(request.plan_json);
   const home = funeralHomeById(request.funeral_home_id);
   const minister = clergyById(request.clergy_id);
@@ -274,11 +280,7 @@ function RequestCard({ request }: { request: CoordinationRequestRow }) {
         </div>
       </details>
 
-      <RequestThread
-        requestId={request.id}
-        messages={listRequestMessages(request.id)}
-        viewerRole="coordinator"
-      />
+      <RequestThread requestId={request.id} messages={thread} viewerRole="coordinator" />
 
       <StatusForm
         action={updateRequestStatus}
@@ -448,12 +450,26 @@ export default async function AdminPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "coordinator") redirect("/account");
 
-  const requests = listCoordinationRequests();
-  const applications = listPartnerApplications();
-  const orders = listOrders();
-  const messages = listMessages();
-  const memorials = listAllPublishedMemorials();
-  const portalAccounts = listPortalAccounts();
+  const requests = await listCoordinationRequests();
+  const applications = await listPartnerApplications();
+  const orders = await listOrders();
+  const messages = await listMessages();
+  const memorials = await listAllPublishedMemorials();
+  const portalAccounts = await listPortalAccounts();
+  const requestThreads = await Promise.all(
+    requests.map(async (request) => ({
+      request,
+      thread: await listRequestMessages(request.id),
+    })),
+  );
+  const memorialSummaries = await Promise.all(
+    memorials.map(async (memorial) => ({
+      memorial,
+      rsvps: await rsvpSummary(memorial.slug),
+      meals: await mealSummary(memorial.slug),
+      condolences: await condolenceCount(memorial.slug),
+    })),
+  );
   const homeOptions = FUNERAL_HOMES.map((h) => ({
     id: h.id,
     label: `${h.name} — ${h.location.city}, ${h.location.state}`,
@@ -494,7 +510,9 @@ export default async function AdminPage() {
               here first — treat every one as a knock on the door.
             </EmptyState>
           ) : (
-            requests.map((request) => <RequestCard key={request.id} request={request} />)
+            requestThreads.map(({ request, thread }) => (
+              <RequestCard key={request.id} request={request} thread={thread} />
+            ))
           )}
         </ConsoleSection>
 
@@ -560,10 +578,7 @@ export default async function AdminPage() {
               their plan, it appears here.
             </EmptyState>
           ) : (
-            memorials.map((memorial) => {
-              const rsvps = rsvpSummary(memorial.slug);
-              const meals = mealSummary(memorial.slug);
-              const condolences = condolenceCount(memorial.slug);
+            memorialSummaries.map(({ memorial, rsvps, meals, condolences }) => {
               return (
                 <Card key={memorial.slug} className="p-6">
                   <div className="flex flex-wrap items-center justify-between gap-4">

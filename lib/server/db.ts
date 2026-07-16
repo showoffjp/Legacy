@@ -1,19 +1,36 @@
-import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * Embedded SQLite store (Node's built-in driver — no native deps).
- * The database lives in ./data, which is gitignored. Swapping this for
- * Postgres later only means reimplementing the helpers in lib/server/*.
+ * The data layer, behind one async interface with two drivers:
+ *
+ * - **Embedded SQLite** (Node's built-in `node:sqlite`, zero native
+ *   dependencies) — the default. The database lives in ./data
+ *   (gitignored), or /tmp on serverless filesystems.
+ * - **Hosted Postgres** — set `DATABASE_URL` (Neon, Supabase, RDS, any
+ *   Postgres 14+) and every record becomes permanent across serverless
+ *   cold starts. TLS is verified against system CAs.
+ *
+ * Statements are written once in SQLite-and-Postgres-compatible SQL
+ * with `?` placeholders; the Postgres driver translates them to $n.
  */
+
+export interface RunResult {
+  changes: number;
+}
+
+export interface Db {
+  run(sql: string, params?: unknown[]): Promise<RunResult>;
+  get<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T | undefined>;
+  all<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
+}
 
 /**
  * Where SQLite and the session secret live. Overridable with
  * LEGACY_DATA_DIR. On Vercel (and similar read-only serverless
- * filesystems) we fall back to /tmp so previews run — note that /tmp is
- * ephemeral there: server-side records reset between cold starts, so
- * persistent deployments should use the Dockerfile or a hosted database.
+ * filesystems) we fall back to /tmp so previews run — /tmp is ephemeral
+ * there, so real deployments should set DATABASE_URL (or use the
+ * Dockerfile with a volume).
  */
 export function dataDir(): string {
   if (process.env.LEGACY_DATA_DIR) return process.env.LEGACY_DATA_DIR;
@@ -21,30 +38,9 @@ export function dataDir(): string {
   return join(process.cwd(), "data");
 }
 
-declare global {
-  // Survive Next.js dev-server hot reloads without reopening handles.
-  var __legacyDb: DatabaseSync | undefined;
-}
+/* ——— Schema (shared dialect) ——— */
 
-function open(): DatabaseSync {
-  const dir = dataDir();
-  mkdirSync(dir, { recursive: true });
-  const db = new DatabaseSync(join(dir, "legacy.db"));
-  db.exec("PRAGMA journal_mode = WAL;");
-  db.exec("PRAGMA foreign_keys = ON;");
-  migrate(db);
-  return db;
-}
-
-export function getDb(): DatabaseSync {
-  if (!globalThis.__legacyDb) {
-    globalThis.__legacyDb = open();
-  }
-  return globalThis.__legacyDb;
-}
-
-function migrate(db: DatabaseSync): void {
-  db.exec(`
+const SCHEMA = `
     CREATE TABLE IF NOT EXISTS users (
       id            TEXT PRIMARY KEY,
       email         TEXT NOT NULL UNIQUE,
@@ -210,20 +206,119 @@ function migrate(db: DatabaseSync): void {
       status         TEXT NOT NULL DEFAULT 'pending',
       sent_at        TEXT
     );
-  `);
+`;
 
-  // Additive migrations for databases created before these columns existed.
-  addColumnIfMissing(db, "memorials", "privacy TEXT NOT NULL DEFAULT 'public'");
-  addColumnIfMissing(db, "plans", "share_code TEXT");
-  addColumnIfMissing(db, "orders", "funding_json TEXT NOT NULL DEFAULT ''");
+/** Additive migrations for databases created before these columns existed. */
+const ADDITIVE_COLUMNS: [table: string, columnDef: string][] = [
+  ["memorials", "privacy TEXT NOT NULL DEFAULT 'public'"],
+  ["plans", "share_code TEXT"],
+  ["orders", "funding_json TEXT NOT NULL DEFAULT ''"],
+];
+
+/* ——— Driver: embedded SQLite (node:sqlite) ——— */
+
+async function openSqlite(): Promise<Db> {
+  const { DatabaseSync } = await import("node:sqlite");
+  const dir = dataDir();
+  mkdirSync(dir, { recursive: true });
+  const db = new DatabaseSync(join(dir, "legacy.db"));
+  db.exec("PRAGMA journal_mode = WAL;");
+  db.exec("PRAGMA foreign_keys = ON;");
+  db.exec(SCHEMA);
+  for (const [table, columnDef] of ADDITIVE_COLUMNS) {
+    try {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
+    } catch {
+      // Column already exists — the migration has run before.
+    }
+  }
+  return {
+    run: async (sql, params = []) => {
+      const result = db.prepare(sql).run(...(params as never[]));
+      return { changes: Number(result.changes) };
+    },
+    get: async (sql, params = []) =>
+      db.prepare(sql).get(...(params as never[])) as never,
+    all: async (sql, params = []) =>
+      db.prepare(sql).all(...(params as never[])) as never,
+  };
 }
 
-function addColumnIfMissing(db: DatabaseSync, table: string, columnDef: string): void {
-  try {
-    db.exec(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
-  } catch {
-    // Column already exists — the migration has run before.
+/* ——— Driver: hosted Postgres (pg) ——— */
+
+/** Translate `?` placeholders to Postgres $1..$n (quote-aware). */
+export function toPgPlaceholders(sql: string): string {
+  let n = 0;
+  let out = "";
+  let inSingle = false;
+  for (const ch of sql) {
+    if (ch === "'") inSingle = !inSingle;
+    if (ch === "?" && !inSingle) {
+      n += 1;
+      out += `$${n}`;
+    } else {
+      out += ch;
+    }
   }
+  return out;
+}
+
+async function openPostgres(url: string): Promise<Db> {
+  const { Pool, types } = await import("pg");
+  // Counts come back as int8/numeric — hand JS a number, as SQLite does.
+  types.setTypeParser(20, (v: string) => Number(v));
+  types.setTypeParser(1700, (v: string) => Number(v));
+  const pool = new Pool({
+    connectionString: url,
+    max: 3, // serverless-friendly: a few warm connections per instance
+    // Hosted Postgres (Neon/Supabase/RDS) presents publicly-trusted
+    // certificates; verify them against the system CA store.
+    ssl: /\bsslmode=(require|verify-full|verify-ca)\b/.test(url) ? true : undefined,
+  });
+  for (const statement of SCHEMA.split(";").map((s) => s.trim()).filter(Boolean)) {
+    await pool.query(statement);
+  }
+  for (const [table, columnDef] of ADDITIVE_COLUMNS) {
+    try {
+      await pool.query(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
+    } catch {
+      // Column already exists — the migration has run before.
+    }
+  }
+  return {
+    run: async (sql, params = []) => {
+      const result = await pool.query(toPgPlaceholders(sql), params as never[]);
+      return { changes: result.rowCount ?? 0 };
+    },
+    get: async (sql, params = []) => {
+      const result = await pool.query(toPgPlaceholders(sql), params as never[]);
+      return result.rows[0] as never;
+    },
+    all: async (sql, params = []) => {
+      const result = await pool.query(toPgPlaceholders(sql), params as never[]);
+      return result.rows as never;
+    },
+  };
+}
+
+/* ——— The singleton ——— */
+
+declare global {
+  // Survive Next.js dev-server hot reloads without reopening handles.
+  var __legacyDbPromise: Promise<Db> | undefined;
+}
+
+export function getDb(): Promise<Db> {
+  if (!globalThis.__legacyDbPromise) {
+    const url = process.env.DATABASE_URL;
+    globalThis.__legacyDbPromise = url ? openPostgres(url) : openSqlite();
+    // If opening fails, allow the next request to retry rather than
+    // caching the rejection forever.
+    globalThis.__legacyDbPromise.catch(() => {
+      globalThis.__legacyDbPromise = undefined;
+    });
+  }
+  return globalThis.__legacyDbPromise;
 }
 
 export function nowIso(): string {

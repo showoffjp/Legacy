@@ -71,7 +71,7 @@ export default async function MemorialOgImage({
 }) {
   const { slug } = await params;
   const sample = memorialBySlug(slug);
-  const published = sample ? null : getPublishedMemorial(slug);
+  const published = sample ? null : await getPublishedMemorial(slug);
 
   const name = sample?.fullName ?? published?.data.fullName ?? "A Life Remembered";
   const birth = sample?.birthDate ?? published?.data.birthDate ?? "";

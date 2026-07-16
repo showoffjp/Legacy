@@ -18,7 +18,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const memorial = getPublishedMemorial(slug);
+  const memorial = await getPublishedMemorial(slug);
   const service = memorial?.data.service;
   if (!memorial || !service?.date) {
     return NextResponse.json({ error: "No service scheduled" }, { status: 404 });

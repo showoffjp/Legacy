@@ -27,11 +27,11 @@ export async function signUp(
   if (!name) return { error: "Please tell us your name." };
   if (!EMAIL_RE.test(email)) return { error: "Please enter a valid email address." };
   if (password.length < 8) return { error: "Please choose a password of at least 8 characters." };
-  if (findUserByEmail(email)) {
+  if (await findUserByEmail(email)) {
     return { error: "An account with that email already exists — you can sign in instead." };
   }
 
-  const user = createUser({ name, email, password });
+  const user = await createUser({ name, email, password });
   await createSessionCookie(user.id);
   redirect("/account/dashboard");
 }
@@ -40,11 +40,11 @@ export async function signIn(
   _prev: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  ensureCoordinatorSeeded();
+  await ensureCoordinatorSeeded();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  const user = findUserByEmail(email);
+  const user = await findUserByEmail(email);
   if (!user || !verifyPassword(password, user.passwordHash)) {
     return { error: "That email and password do not match our records." };
   }

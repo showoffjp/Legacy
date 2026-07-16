@@ -65,7 +65,7 @@ export async function invitePartnerAction(
 export async function unpublishMemorialAction(formData: FormData): Promise<void> {
   if (!(await requireCoordinator())) return;
   const slug = String(formData.get("slug") ?? "");
-  if (slug) unpublishMemorial(slug);
+  if (slug) await unpublishMemorial(slug);
   revalidatePath("/admin");
   revalidatePath("/memorials");
 }

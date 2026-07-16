@@ -30,7 +30,7 @@ export default async function AssignmentHeldPage({
   params: Promise<{ reference: string }>;
 }) {
   const { reference } = await params;
-  const order = getOrderByReference(reference);
+  const order = await getOrderByReference(reference);
   if (!order || order.provider !== "insurance-assignment") redirect("/pricing");
   const funding = parseFunding(order);
 

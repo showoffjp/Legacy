@@ -23,10 +23,12 @@ export interface PartnerLink {
   org_name: string;
 }
 
-export function getPartnerLink(userId: string): PartnerLink | null {
-  const row = getDb()
-    .prepare("SELECT user_id, kind, ref_id, org_name FROM partner_links WHERE user_id = ?")
-    .get(userId) as unknown as PartnerLink | undefined;
+export async function getPartnerLink(userId: string): Promise<PartnerLink | null> {
+  const db = await getDb();
+  const row = await db.get<PartnerLink>(
+    "SELECT user_id, kind, ref_id, org_name FROM partner_links WHERE user_id = ?",
+    [userId],
+  );
   return row ?? null;
 }
 
@@ -35,14 +37,13 @@ export interface PortalAccountRow extends PartnerLink {
   name: string;
 }
 
-export function listPortalAccounts(): PortalAccountRow[] {
-  return getDb()
-    .prepare(
-      `SELECT p.user_id, p.kind, p.ref_id, p.org_name, u.email, u.name
-       FROM partner_links p JOIN users u ON u.id = p.user_id
-       ORDER BY p.org_name`,
-    )
-    .all() as unknown as PortalAccountRow[];
+export async function listPortalAccounts(): Promise<PortalAccountRow[]> {
+  const db = await getDb();
+  return db.all<PortalAccountRow>(
+    `SELECT p.user_id, p.kind, p.ref_id, p.org_name, u.email, u.name
+     FROM partner_links p JOIN users u ON u.id = p.user_id
+     ORDER BY p.org_name`,
+  );
 }
 
 function friendlyTempPassword(): string {
@@ -64,21 +65,23 @@ export async function invitePartner(
   const entity =
     input.kind === "funeral-home" ? funeralHomeById(input.refId) : clergyById(input.refId);
   if (!entity) return { ok: false, error: "Choose which partner this account is for." };
-  if (findUserByEmail(input.email)) {
+  if (await findUserByEmail(input.email)) {
     return { ok: false, error: "An account with that email already exists." };
   }
 
   const orgName = entity.name;
   const tempPassword = friendlyTempPassword();
-  const user = createUser({
+  const user = await createUser({
     email: input.email,
     name: input.contactName || orgName,
     password: tempPassword,
     role: "partner",
   });
-  getDb()
-    .prepare("INSERT INTO partner_links (user_id, kind, ref_id, org_name) VALUES (?, ?, ?, ?)")
-    .run(user.id, input.kind, input.refId, orgName);
+  const db = await getDb();
+  await db.run(
+    "INSERT INTO partner_links (user_id, kind, ref_id, org_name) VALUES (?, ?, ?, ?)",
+    [user.id, input.kind, input.refId, orgName],
+  );
 
   await sendMessage({
     channel: "email",
@@ -93,8 +96,11 @@ export async function invitePartner(
 }
 
 /** The requests addressed to this partner, newest first. */
-export function listRequestsForPartner(link: PartnerLink): CoordinationRequestRow[] {
-  return listCoordinationRequests().filter((r) =>
+export async function listRequestsForPartner(
+  link: PartnerLink,
+): Promise<CoordinationRequestRow[]> {
+  const requests = await listCoordinationRequests();
+  return requests.filter((r) =>
     link.kind === "funeral-home" ? r.funeral_home_id === link.ref_id : r.clergy_id === link.ref_id,
   );
 }

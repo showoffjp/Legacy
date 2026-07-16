@@ -20,6 +20,6 @@ export async function changePasswordAction(
   if (next !== confirm) {
     return { ok: false, error: "The new passwords do not match." };
   }
-  const result = changePassword(user.id, current, next);
+  const result = await changePassword(user.id, current, next);
   return { ok: result.ok, error: result.error ?? "" };
 }

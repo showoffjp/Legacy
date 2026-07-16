@@ -29,12 +29,12 @@ export default async function ReceiptPage({
 }) {
   const { reference } = await params;
   const { session_id } = await searchParams;
-  let order = getOrderByReference(reference);
+  let order = await getOrderByReference(reference);
   if (!order) redirect("/pricing");
   if (order.status !== "paid" && session_id) {
     // Returning from Stripe ahead of the webhook — verify the session now.
     await confirmStripeSession(reference, session_id);
-    order = getOrderByReference(reference);
+    order = await getOrderByReference(reference);
   }
   if (!order || order.status !== "paid") redirect(`/checkout/${reference}`);
 

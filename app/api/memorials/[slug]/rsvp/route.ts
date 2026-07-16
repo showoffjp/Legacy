@@ -6,7 +6,7 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  if (!getPublishedMemorial(slug)) {
+  if (!(await getPublishedMemorial(slug))) {
     return NextResponse.json({ error: "Memorial not found" }, { status: 404 });
   }
   let body: { name?: string; attending?: boolean; guests?: number; note?: string };
@@ -17,7 +17,7 @@ export async function POST(
   }
   const name = body.name?.trim().slice(0, 120) ?? "";
   if (!name) return NextResponse.json({ error: "Please share your name." }, { status: 400 });
-  addRsvp({
+  await addRsvp({
     slug,
     name,
     attending: body.attending !== false,

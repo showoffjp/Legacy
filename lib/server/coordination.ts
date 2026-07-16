@@ -38,7 +38,7 @@ export interface CreateCoordinationInput {
 export async function createCoordinationRequest(
   input: CreateCoordinationInput,
 ): Promise<{ id: string; reference: string }> {
-  const db = getDb();
+  const db = await getDb();
   const id = randomUUID();
   const reference = makeReference();
   const now = nowIso();
@@ -52,24 +52,25 @@ export async function createCoordinationRequest(
     deceased: { ...input.plan.deceased, portraitDataUrl: "" },
   };
 
-  db.prepare(
+  await db.run(
     `INSERT INTO coordination_requests
        (id, reference, user_id, contact_name, contact_email, contact_phone, notes,
         plan_json, funeral_home_id, clergy_id, status, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)`,
-  ).run(
-    id,
-    reference,
-    input.userId,
-    input.contact.name,
-    input.contact.email,
-    input.contact.phone,
-    input.notes,
-    JSON.stringify(planForStorage),
-    input.plan.funeralHomeId,
-    input.plan.clergyId,
-    now,
-    now,
+    [
+      id,
+      reference,
+      input.userId,
+      input.contact.name,
+      input.contact.email,
+      input.contact.phone,
+      input.notes,
+      JSON.stringify(planForStorage),
+      input.plan.funeralHomeId,
+      input.plan.clergyId,
+      now,
+      now,
+    ],
   );
 
   const when = [input.plan.service.date, input.plan.service.time].filter(Boolean).join(" at ");
@@ -129,24 +130,32 @@ export async function createCoordinationRequest(
   return { id, reference };
 }
 
-export function listCoordinationRequests(): CoordinationRequestRow[] {
-  return getDb()
-    .prepare("SELECT * FROM coordination_requests ORDER BY created_at DESC")
-    .all() as unknown as CoordinationRequestRow[];
+export async function listCoordinationRequests(): Promise<CoordinationRequestRow[]> {
+  const db = await getDb();
+  return db.all<CoordinationRequestRow>(
+    "SELECT * FROM coordination_requests ORDER BY created_at DESC",
+  );
 }
 
-export function listCoordinationRequestsForUser(userId: string): CoordinationRequestRow[] {
-  return getDb()
-    .prepare("SELECT * FROM coordination_requests WHERE user_id = ? ORDER BY created_at DESC")
-    .all(userId) as unknown as CoordinationRequestRow[];
+export async function listCoordinationRequestsForUser(
+  userId: string,
+): Promise<CoordinationRequestRow[]> {
+  const db = await getDb();
+  return db.all<CoordinationRequestRow>(
+    "SELECT * FROM coordination_requests WHERE user_id = ? ORDER BY created_at DESC",
+    [userId],
+  );
 }
 
 const REQUEST_STATUSES: RequestStatus[] = ["received", "confirmed", "in-progress", "completed"];
 
-export function setCoordinationStatus(id: string, status: string): boolean {
+export async function setCoordinationStatus(id: string, status: string): Promise<boolean> {
   if (!REQUEST_STATUSES.includes(status as RequestStatus)) return false;
-  getDb()
-    .prepare("UPDATE coordination_requests SET status = ?, updated_at = ? WHERE id = ?")
-    .run(status, nowIso(), id);
+  const db = await getDb();
+  await db.run("UPDATE coordination_requests SET status = ?, updated_at = ? WHERE id = ?", [
+    status,
+    nowIso(),
+    id,
+  ]);
   return true;
 }

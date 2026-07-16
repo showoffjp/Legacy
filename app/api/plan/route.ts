@@ -5,7 +5,7 @@ import { getPlanForUser, upsertPlanForUser } from "@/lib/server/plans";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
-  const plan = getPlanForUser(user.id);
+  const plan = await getPlanForUser(user.id);
   return NextResponse.json({ plan: plan?.data ?? null, updatedAt: plan?.updatedAt ?? null });
 }
 
@@ -27,6 +27,6 @@ export async function PUT(req: NextRequest) {
   if (json.length > 2_000_000) {
     return NextResponse.json({ error: "Plan too large" }, { status: 413 });
   }
-  const updatedAt = upsertPlanForUser(user.id, data);
+  const updatedAt = await upsertPlanForUser(user.id, data);
   return NextResponse.json({ ok: true, updatedAt });
 }

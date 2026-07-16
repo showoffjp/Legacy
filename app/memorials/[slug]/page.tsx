@@ -36,7 +36,7 @@ const KIND_LABELS: Record<string, string> = {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const sample = memorialBySlug(slug);
-  const published = sample ? null : getPublishedMemorial(slug);
+  const published = sample ? null : await getPublishedMemorial(slug);
   const name = sample?.fullName ?? published?.data.fullName;
   if (!name) return { title: "Memorial" };
   return {
@@ -211,24 +211,25 @@ function SampleMemorialView({ memorial }: { memorial: Memorial }) {
 
 /* ————— Published memorials (created by families from their plan) ————— */
 
-function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial }) {
+async function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial }) {
   const d = memorial.data;
   const hymns = hymnsFor(d.hymnIds);
   const service = d.service;
   const hasServiceDetails = Boolean(service && (service.date || service.venueName));
   const dates = [d.birthDate, d.deathDate].filter(Boolean).map(formatLongDate).join(" — ");
-  const condolences = listCondolences(memorial.slug).map((c) => ({
+  const condolences = (await listCondolences(memorial.slug)).map((c) => ({
     id: c.id,
     name: c.name,
     message: c.message,
     createdAt: c.created_at,
   }));
-  const mealOffers = listMealOffers(memorial.slug).map((m) => ({
+  const mealOffers = (await listMealOffers(memorial.slug)).map((m) => ({
     id: m.id,
     name: m.name,
     dish: m.dish,
     serves: m.serves,
   }));
+  const gifts = await giftSummary(memorial.slug);
 
   return (
     <>
@@ -349,7 +350,7 @@ function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial }) {
           <MemorialGifts
             slug={memorial.slug}
             giftsNote={d.giftsNote}
-            initialCount={giftSummary(memorial.slug).gifts}
+            initialCount={gifts.gifts}
           />
         ) : null}
         {d.photos && d.photos.length > 0 ? (
@@ -384,7 +385,7 @@ function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial }) {
 export default async function MemorialDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const sample = memorialBySlug(slug);
-  const published = sample ? null : getPublishedMemorial(slug);
+  const published = sample ? null : await getPublishedMemorial(slug);
   if (!sample && !published) {
     notFound();
   }

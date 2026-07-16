@@ -41,6 +41,6 @@ export async function POST(req: NextRequest) {
   }
 
   const user = await getCurrentUser();
-  const slug = publishMemorialFromPlan(plan, user?.id ?? null);
+  const slug = await publishMemorialFromPlan(plan, user?.id ?? null);
   return NextResponse.json({ ok: true, slug });
 }

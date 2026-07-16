@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 
 const yearOf = (iso: string) => iso.slice(0, 4);
 
-export default function MemorialsPage() {
-  const published = listPublishedMemorials();
+export default async function MemorialsPage() {
+  const published = await listPublishedMemorials();
   return (
     <div className="py-16 sm:py-24">
       <Container>

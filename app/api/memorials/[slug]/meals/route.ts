@@ -6,7 +6,7 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  if (!getPublishedMemorial(slug)) {
+  if (!(await getPublishedMemorial(slug))) {
     return NextResponse.json({ error: "Memorial not found" }, { status: 404 });
   }
   let body: { name?: string; dish?: string; serves?: number; note?: string };
@@ -21,7 +21,7 @@ export async function POST(
   if (!dish) {
     return NextResponse.json({ error: "Please tell the family what you will bring." }, { status: 400 });
   }
-  const offer = addMealOffer({
+  const offer = await addMealOffer({
     slug,
     name,
     dish,

@@ -112,13 +112,17 @@ function shortSuffix(): string {
   return s;
 }
 
-function slugTaken(slug: string): boolean {
+async function slugTaken(slug: string): Promise<boolean> {
   if (MEMORIALS.some((m) => m.slug === slug)) return true;
-  const row = getDb().prepare("SELECT slug FROM memorials WHERE slug = ?").get(slug);
+  const db = await getDb();
+  const row = await db.get("SELECT slug FROM memorials WHERE slug = ?", [slug]);
   return row !== undefined;
 }
 
-export function publishMemorialFromPlan(plan: ServicePlan, ownerId: string | null): string {
+export async function publishMemorialFromPlan(
+  plan: ServicePlan,
+  ownerId: string | null,
+): Promise<string> {
   const verse = scriptureById(plan.deceased.favoriteVerseId);
   const data: PublishedMemorialData = {
     fullName: plan.deceased.fullName.trim(),
@@ -154,16 +158,16 @@ export function publishMemorialFromPlan(plan: ServicePlan, ownerId: string | nul
   };
 
   let slug = slugify(data.fullName);
-  while (slugTaken(slug)) {
+  while (await slugTaken(slug)) {
     slug = `${slugify(data.fullName)}-${shortSuffix()}`;
   }
 
   const now = nowIso();
-  getDb()
-    .prepare(
-      "INSERT INTO memorials (slug, owner_id, data, published, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?)",
-    )
-    .run(slug, ownerId, JSON.stringify(data), now, now);
+  const db = await getDb();
+  await db.run(
+    "INSERT INTO memorials (slug, owner_id, data, published, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?)",
+    [slug, ownerId, JSON.stringify(data), now, now],
+  );
   return slug;
 }
 
@@ -181,49 +185,62 @@ function rowToMemorial(row: MemorialRow): PublishedMemorial | null {
   }
 }
 
-export function getPublishedMemorial(slug: string): PublishedMemorial | null {
-  const row = getDb()
-    .prepare("SELECT * FROM memorials WHERE slug = ? AND published = 1")
-    .get(slug) as unknown as MemorialRow | undefined;
+export async function getPublishedMemorial(slug: string): Promise<PublishedMemorial | null> {
+  const db = await getDb();
+  const row = await db.get<MemorialRow>(
+    "SELECT * FROM memorials WHERE slug = ? AND published = 1",
+    [slug],
+  );
   return row ? rowToMemorial(row) : null;
 }
 
 /** Publicly listed memorials — link-only pages stay reachable but unlisted. */
-export function listPublishedMemorials(limit = 50): PublishedMemorial[] {
-  const rows = getDb()
-    .prepare(
-      "SELECT * FROM memorials WHERE published = 1 AND privacy = 'public' ORDER BY created_at DESC LIMIT ?",
-    )
-    .all(limit) as unknown as MemorialRow[];
+export async function listPublishedMemorials(limit = 50): Promise<PublishedMemorial[]> {
+  const db = await getDb();
+  const rows = await db.all<MemorialRow>(
+    "SELECT * FROM memorials WHERE published = 1 AND privacy = 'public' ORDER BY created_at DESC LIMIT ?",
+    [limit],
+  );
   return rows.map(rowToMemorial).filter((m): m is PublishedMemorial => m !== null);
 }
 
 /** Every published memorial regardless of privacy — for the coordinator console. */
-export function listAllPublishedMemorials(limit = 100): PublishedMemorial[] {
-  const rows = getDb()
-    .prepare("SELECT * FROM memorials WHERE published = 1 ORDER BY created_at DESC LIMIT ?")
-    .all(limit) as unknown as MemorialRow[];
+export async function listAllPublishedMemorials(limit = 100): Promise<PublishedMemorial[]> {
+  const db = await getDb();
+  const rows = await db.all<MemorialRow>(
+    "SELECT * FROM memorials WHERE published = 1 ORDER BY created_at DESC LIMIT ?",
+    [limit],
+  );
   return rows.map(rowToMemorial).filter((m): m is PublishedMemorial => m !== null);
 }
 
-export function listMemorialsForOwner(ownerId: string): PublishedMemorial[] {
-  const rows = getDb()
-    .prepare("SELECT * FROM memorials WHERE owner_id = ? ORDER BY created_at DESC")
-    .all(ownerId) as unknown as MemorialRow[];
+export async function listMemorialsForOwner(ownerId: string): Promise<PublishedMemorial[]> {
+  const db = await getDb();
+  const rows = await db.all<MemorialRow>(
+    "SELECT * FROM memorials WHERE owner_id = ? ORDER BY created_at DESC",
+    [ownerId],
+  );
   return rows.map(rowToMemorial).filter((m): m is PublishedMemorial => m !== null);
 }
 
 /** Coordinator moderation: hide a published memorial (content is retained). */
-export function unpublishMemorial(slug: string): void {
-  getDb()
-    .prepare("UPDATE memorials SET published = 0, updated_at = ? WHERE slug = ?")
-    .run(nowIso(), slug);
+export async function unpublishMemorial(slug: string): Promise<void> {
+  const db = await getDb();
+  await db.run("UPDATE memorials SET published = 0, updated_at = ? WHERE slug = ?", [
+    nowIso(),
+    slug,
+  ]);
 }
 
-export function getMemorialForOwner(slug: string, ownerId: string): PublishedMemorial | null {
-  const row = getDb()
-    .prepare("SELECT * FROM memorials WHERE slug = ? AND owner_id = ? AND published = 1")
-    .get(slug, ownerId) as unknown as MemorialRow | undefined;
+export async function getMemorialForOwner(
+  slug: string,
+  ownerId: string,
+): Promise<PublishedMemorial | null> {
+  const db = await getDb();
+  const row = await db.get<MemorialRow>(
+    "SELECT * FROM memorials WHERE slug = ? AND owner_id = ? AND published = 1",
+    [slug, ownerId],
+  );
   return row ? rowToMemorial(row) : null;
 }
 
@@ -253,12 +270,12 @@ export function sanitizeGalleryPhotos(photos: unknown): string[] {
 }
 
 /** Owner editing — merges content into the stored page. */
-export function updateMemorialByOwner(
+export async function updateMemorialByOwner(
   slug: string,
   ownerId: string,
   patch: OwnerMemorialPatch,
-): boolean {
-  const memorial = getMemorialForOwner(slug, ownerId);
+): Promise<boolean> {
+  const memorial = await getMemorialForOwner(slug, ownerId);
   if (!memorial) return false;
   const data: PublishedMemorialData = {
     ...memorial.data,
@@ -270,60 +287,65 @@ export function updateMemorialByOwner(
     ...(patch.photos !== undefined ? { photos: sanitizeGalleryPhotos(patch.photos) } : null),
     ...(patch.service !== undefined ? { service: patch.service } : null),
   };
-  getDb()
-    .prepare("UPDATE memorials SET data = ?, privacy = ?, updated_at = ? WHERE slug = ?")
-    .run(
-      JSON.stringify(data),
-      patch.privacy ?? memorial.privacy,
-      nowIso(),
-      slug,
-    );
+  const db = await getDb();
+  await db.run("UPDATE memorials SET data = ?, privacy = ?, updated_at = ? WHERE slug = ?", [
+    JSON.stringify(data),
+    patch.privacy ?? memorial.privacy,
+    nowIso(),
+    slug,
+  ]);
   return true;
 }
 
-export function unpublishMemorialByOwner(slug: string, ownerId: string): boolean {
-  const memorial = getMemorialForOwner(slug, ownerId);
+export async function unpublishMemorialByOwner(slug: string, ownerId: string): Promise<boolean> {
+  const memorial = await getMemorialForOwner(slug, ownerId);
   if (!memorial) return false;
-  unpublishMemorial(slug);
+  await unpublishMemorial(slug);
   return true;
 }
 
 /* ——— Condolences ——— */
 
-export function addCondolence(slug: string, name: string, message: string): CondolenceRow {
+export async function addCondolence(
+  slug: string,
+  name: string,
+  message: string,
+): Promise<CondolenceRow> {
   const id = randomUUID();
   const now = nowIso();
-  getDb()
-    .prepare(
-      "INSERT INTO condolences (id, memorial_slug, name, message, created_at) VALUES (?, ?, ?, ?, ?)",
-    )
-    .run(id, slug, name, message, now);
+  const db = await getDb();
+  await db.run(
+    "INSERT INTO condolences (id, memorial_slug, name, message, created_at) VALUES (?, ?, ?, ?, ?)",
+    [id, slug, name, message, now],
+  );
   return { id, memorial_slug: slug, name, message, created_at: now };
 }
 
-export function listCondolences(slug: string): CondolenceRow[] {
-  return getDb()
-    .prepare("SELECT * FROM condolences WHERE memorial_slug = ? ORDER BY created_at DESC")
-    .all(slug) as unknown as CondolenceRow[];
+export async function listCondolences(slug: string): Promise<CondolenceRow[]> {
+  const db = await getDb();
+  return db.all<CondolenceRow>(
+    "SELECT * FROM condolences WHERE memorial_slug = ? ORDER BY created_at DESC",
+    [slug],
+  );
 }
 
 /* ——— RSVPs ——— */
 
-export function addRsvp(input: {
+export async function addRsvp(input: {
   slug: string;
   name: string;
   attending: boolean;
   guests: number;
   note: string;
-}): RsvpRow {
+}): Promise<RsvpRow> {
   const id = randomUUID();
   const now = nowIso();
   const guests = Math.max(1, Math.min(20, Math.round(input.guests)));
-  getDb()
-    .prepare(
-      "INSERT INTO rsvps (id, memorial_slug, name, attending, guests, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    )
-    .run(id, input.slug, input.name, input.attending ? 1 : 0, guests, input.note, now);
+  const db = await getDb();
+  await db.run(
+    "INSERT INTO rsvps (id, memorial_slug, name, attending, guests, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [id, input.slug, input.name, input.attending ? 1 : 0, guests, input.note, now],
+  );
   return {
     id,
     memorial_slug: input.slug,
@@ -335,13 +357,13 @@ export function addRsvp(input: {
   };
 }
 
-export function rsvpSummary(slug: string): { families: number; guests: number } {
-  const row = getDb()
-    .prepare(
-      "SELECT COUNT(*) AS families, COALESCE(SUM(guests), 0) AS guests FROM rsvps WHERE memorial_slug = ? AND attending = 1",
-    )
-    .get(slug) as unknown as { families: number; guests: number };
-  return { families: row.families, guests: row.guests };
+export async function rsvpSummary(slug: string): Promise<{ families: number; guests: number }> {
+  const db = await getDb();
+  const row = await db.get<{ families: number; guests: number }>(
+    "SELECT COUNT(*) AS families, COALESCE(SUM(guests), 0) AS guests FROM rsvps WHERE memorial_slug = ? AND attending = 1",
+    [slug],
+  );
+  return { families: row?.families ?? 0, guests: row?.guests ?? 0 };
 }
 
 /* ——— The repast table (meal sign-up) ——— */
@@ -356,21 +378,21 @@ export interface MealOfferRow {
   created_at: string;
 }
 
-export function addMealOffer(input: {
+export async function addMealOffer(input: {
   slug: string;
   name: string;
   dish: string;
   serves: number;
   note: string;
-}): MealOfferRow {
+}): Promise<MealOfferRow> {
   const id = randomUUID();
   const now = nowIso();
   const serves = Math.max(1, Math.min(100, Math.round(input.serves)));
-  getDb()
-    .prepare(
-      "INSERT INTO meal_offers (id, memorial_slug, name, dish, serves, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    )
-    .run(id, input.slug, input.name, input.dish, serves, input.note, now);
+  const db = await getDb();
+  await db.run(
+    "INSERT INTO meal_offers (id, memorial_slug, name, dish, serves, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [id, input.slug, input.name, input.dish, serves, input.note, now],
+  );
   return {
     id,
     memorial_slug: input.slug,
@@ -382,19 +404,21 @@ export function addMealOffer(input: {
   };
 }
 
-export function listMealOffers(slug: string): MealOfferRow[] {
-  return getDb()
-    .prepare("SELECT * FROM meal_offers WHERE memorial_slug = ? ORDER BY created_at ASC")
-    .all(slug) as unknown as MealOfferRow[];
+export async function listMealOffers(slug: string): Promise<MealOfferRow[]> {
+  const db = await getDb();
+  return db.all<MealOfferRow>(
+    "SELECT * FROM meal_offers WHERE memorial_slug = ? ORDER BY created_at ASC",
+    [slug],
+  );
 }
 
-export function mealSummary(slug: string): { dishes: number; serves: number } {
-  const row = getDb()
-    .prepare(
-      "SELECT COUNT(*) AS dishes, COALESCE(SUM(serves), 0) AS serves FROM meal_offers WHERE memorial_slug = ?",
-    )
-    .get(slug) as unknown as { dishes: number; serves: number };
-  return { dishes: row.dishes, serves: row.serves };
+export async function mealSummary(slug: string): Promise<{ dishes: number; serves: number }> {
+  const db = await getDb();
+  const row = await db.get<{ dishes: number; serves: number }>(
+    "SELECT COUNT(*) AS dishes, COALESCE(SUM(serves), 0) AS serves FROM meal_offers WHERE memorial_slug = ?",
+    [slug],
+  );
+  return { dishes: row?.dishes ?? 0, serves: row?.serves ?? 0 };
 }
 
 /* ——— Memorial gifts ("in lieu of flowers") ——— */
@@ -408,41 +432,45 @@ export interface GiftPledgeRow {
   created_at: string;
 }
 
-export function addGiftPledge(input: {
+export async function addGiftPledge(input: {
   slug: string;
   name: string;
   amountUsd: number;
   note: string;
-}): GiftPledgeRow {
+}): Promise<GiftPledgeRow> {
   const id = randomUUID();
   const now = nowIso();
   const amount = Math.max(0, Math.min(100_000, Math.round(input.amountUsd)));
-  getDb()
-    .prepare(
-      "INSERT INTO gift_pledges (id, memorial_slug, name, amount_usd, note, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-    )
-    .run(id, input.slug, input.name, amount, input.note, now);
+  const db = await getDb();
+  await db.run(
+    "INSERT INTO gift_pledges (id, memorial_slug, name, amount_usd, note, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+    [id, input.slug, input.name, amount, input.note, now],
+  );
   return { id, memorial_slug: input.slug, name: input.name, amount_usd: amount, note: input.note, created_at: now };
 }
 
-export function listGiftPledges(slug: string): GiftPledgeRow[] {
-  return getDb()
-    .prepare("SELECT * FROM gift_pledges WHERE memorial_slug = ? ORDER BY created_at DESC")
-    .all(slug) as unknown as GiftPledgeRow[];
+export async function listGiftPledges(slug: string): Promise<GiftPledgeRow[]> {
+  const db = await getDb();
+  return db.all<GiftPledgeRow>(
+    "SELECT * FROM gift_pledges WHERE memorial_slug = ? ORDER BY created_at DESC",
+    [slug],
+  );
 }
 
-export function giftSummary(slug: string): { gifts: number; total: number } {
-  const row = getDb()
-    .prepare(
-      "SELECT COUNT(*) AS gifts, COALESCE(SUM(amount_usd), 0) AS total FROM gift_pledges WHERE memorial_slug = ?",
-    )
-    .get(slug) as unknown as { gifts: number; total: number };
-  return { gifts: row.gifts, total: row.total };
+export async function giftSummary(slug: string): Promise<{ gifts: number; total: number }> {
+  const db = await getDb();
+  const row = await db.get<{ gifts: number; total: number }>(
+    "SELECT COUNT(*) AS gifts, COALESCE(SUM(amount_usd), 0) AS total FROM gift_pledges WHERE memorial_slug = ?",
+    [slug],
+  );
+  return { gifts: row?.gifts ?? 0, total: row?.total ?? 0 };
 }
 
-export function condolenceCount(slug: string): number {
-  const row = getDb()
-    .prepare("SELECT COUNT(*) AS n FROM condolences WHERE memorial_slug = ?")
-    .get(slug) as unknown as { n: number };
-  return row.n;
+export async function condolenceCount(slug: string): Promise<number> {
+  const db = await getDb();
+  const row = await db.get<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM condolences WHERE memorial_slug = ?",
+    [slug],
+  );
+  return row?.n ?? 0;
 }
