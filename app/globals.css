@@ -1,0 +1,463 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette — warm parchment, deep ink, muted liturgical gold, quiet sage */
+  --color-parchment: #faf7f1;
+  --color-parchment-deep: #f1ebdf;
+  --color-ink: #22293a;
+  --color-ink-soft: #47506a;
+  --color-ink-faint: #6e7690;
+  --color-gold: #a3833f;
+  --color-gold-deep: #8a6d31;
+  --color-gold-pale: #ecdfc2;
+  --color-sage: #6f7f6a;
+  --color-sage-pale: #dde5da;
+  --color-rose: #9d6b64;
+  --color-rose-pale: #eddcd7;
+  --color-night: #171d2b;
+  --color-night-soft: #202839;
+  --color-line: #e2dbca;
+
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
+
+  --shadow-soft: 0 1px 2px rgb(34 41 58 / 0.04), 0 8px 24px rgb(34 41 58 / 0.07);
+  --shadow-lift: 0 2px 4px rgb(34 41 58 / 0.06), 0 16px 40px rgb(34 41 58 / 0.12);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-parchment);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-gold-pale);
+  color: var(--color-ink);
+}
+
+/* Keyboard focus is always visible, in the house gold. */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Thin gold rule used as a section ornament */
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-gold);
+}
+.ornament::before,
+.ornament::after {
+  content: "";
+  height: 1px;
+  width: 2.5rem;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* ————— Buttons: gradient depth + a sheen that sweeps on hover ————— */
+
+.btn-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.btn-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+.btn-sheen:hover::after {
+  transition: transform 0.65s ease;
+  transform: translateX(130%);
+}
+
+/* ————— Card accents: a colored hairline that grows on hover ————— */
+
+.card-accent {
+  position: relative;
+  overflow: hidden;
+}
+.card-accent::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-grad, linear-gradient(90deg, #a3833f, #d9bc7a));
+  transform: scaleX(0.35);
+  transform-origin: left;
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.card-accent:hover::before {
+  transform: scaleX(1);
+}
+.card-accent-gold {
+  --accent-grad: linear-gradient(90deg, #a3833f, #dcc084);
+}
+.card-accent-sage {
+  --accent-grad: linear-gradient(90deg, #6f7f6a, #a8bda1);
+}
+.card-accent-rose {
+  --accent-grad: linear-gradient(90deg, #9d6b64, #d3a79f);
+}
+
+/* ————— Icon medallions: reliable color even where emoji render flat ————— */
+
+.medallion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 9999px;
+  font-size: 1.5rem;
+  line-height: 1;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.65),
+    0 2px 8px rgba(34, 41, 58, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.medallion-gold {
+  background: linear-gradient(140deg, #f3e6c8, #dcc084 55%, #c4a35e);
+}
+.medallion-sage {
+  background: linear-gradient(140deg, #e4ecdf, #b9cbb1 55%, #93ab89);
+}
+.medallion-rose {
+  background: linear-gradient(140deg, #f4e3de, #ddb4ab 55%, #c1857b);
+}
+
+/* Pill links inside cards */
+.pill-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  border-radius: 9999px;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--color-gold-deep);
+  background: color-mix(in srgb, var(--color-gold-pale) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-gold) 30%, transparent);
+  transition: all 0.25s ease;
+}
+.pill-link:hover {
+  background: var(--color-gold-pale);
+  border-color: var(--color-gold);
+  transform: translateX(2px);
+}
+
+/* ————— Reveal-on-scroll (active only when html.motion-ok) ————— */
+
+html.motion-ok .reveal {
+  opacity: 0;
+  transform: translateY(1.35rem);
+}
+
+html.motion-ok .reveal.reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) var(--reveal-delay, 0ms),
+    transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) var(--reveal-delay, 0ms);
+}
+
+@media print {
+  html.motion-ok .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ————— Hero ambience: candlelight-at-dawn glows + gentle text rise ————— */
+
+.hero-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(72px);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.hero-glow-gold {
+  width: 76rem;
+  height: 38rem;
+  left: 50%;
+  top: -13rem;
+  margin-left: -38rem;
+  background: radial-gradient(closest-side, rgba(163, 131, 63, 0.55), rgba(163, 131, 63, 0.18) 45%, transparent 76%);
+  opacity: 0.95;
+}
+
+.hero-glow-sage {
+  width: 50rem;
+  height: 28rem;
+  right: -16rem;
+  bottom: -11rem;
+  background: radial-gradient(closest-side, rgba(111, 127, 106, 0.4), rgba(111, 127, 106, 0.12) 50%, transparent 78%);
+  opacity: 0.85;
+}
+
+.hero-glow-ember {
+  width: 34rem;
+  height: 22rem;
+  left: -12rem;
+  top: 38%;
+  background: radial-gradient(closest-side, rgba(236, 223, 194, 0.12), rgba(236, 223, 194, 0.04) 50%, transparent 78%);
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes glow-drift-gold {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+      opacity: 0.85;
+    }
+    50% {
+      transform: translate3d(4rem, 1.5rem, 0) scale(1.12);
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(-3rem, -1rem, 0) scale(0.97);
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes glow-drift-sage {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+      opacity: 0.65;
+    }
+    50% {
+      transform: translate3d(-5rem, -2rem, 0) scale(1.15);
+      opacity: 0.95;
+    }
+    100% {
+      transform: translate3d(2rem, 1rem, 0) scale(1);
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes glow-drift-ember {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+      opacity: 0.45;
+    }
+    50% {
+      transform: translate3d(3rem, -2.5rem, 0) scale(1.2);
+      opacity: 0.85;
+    }
+    100% {
+      transform: translate3d(-1.5rem, 1rem, 0) scale(0.95);
+      opacity: 0.5;
+    }
+  }
+
+  .hero-glow-gold {
+    animation: glow-drift-gold 26s ease-in-out infinite alternate;
+  }
+  .hero-glow-sage {
+    animation: glow-drift-sage 34s ease-in-out infinite alternate;
+  }
+  .hero-glow-ember {
+    animation: glow-drift-ember 42s ease-in-out infinite alternate;
+  }
+
+  @keyframes hero-rise {
+    from {
+      opacity: 0;
+      transform: translateY(1.1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .hero-rise {
+    animation: hero-rise 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  /* Faint light rays turning imperceptibly behind the hero */
+  @keyframes rays-turn {
+    from {
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+      transform: translate(-50%, -50%) rotate(360deg);
+    }
+  }
+
+  .hero-rays {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    width: 160rem;
+    height: 160rem;
+    transform: translate(-50%, -50%);
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(236, 223, 194, 0.045) 12deg,
+      transparent 26deg,
+      transparent 96deg,
+      rgba(236, 223, 194, 0.035) 112deg,
+      transparent 128deg,
+      transparent 204deg,
+      rgba(236, 223, 194, 0.05) 218deg,
+      transparent 236deg,
+      transparent 322deg,
+      rgba(236, 223, 194, 0.04) 338deg,
+      transparent 352deg
+    );
+    animation: rays-turn 180s linear infinite;
+    pointer-events: none;
+  }
+
+  /* Rising candle-light motes */
+  @keyframes mote-rise {
+    0% {
+      transform: translate3d(0, 0, 0);
+      opacity: 0;
+    }
+    12% {
+      opacity: var(--mote-peak, 0.5);
+    }
+    85% {
+      opacity: var(--mote-peak, 0.5);
+    }
+    100% {
+      transform: translate3d(var(--mote-sway, 1.5rem), -46rem, 0);
+      opacity: 0;
+    }
+  }
+
+  .hero-mote {
+    position: absolute;
+    bottom: -2rem;
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(236, 223, 194, 0.95), rgba(163, 131, 63, 0.25) 70%, transparent);
+    filter: blur(0.7px);
+    animation: mote-rise var(--mote-duration, 22s) linear infinite;
+    animation-delay: var(--mote-delay, 0s);
+    pointer-events: none;
+  }
+
+  /* Gold shimmer that sweeps across the emphasized hero words */
+  @keyframes gold-shimmer {
+    0%,
+    58% {
+      background-position: 130% 0;
+    }
+    88%,
+    100% {
+      background-position: -30% 0;
+    }
+  }
+
+  .gold-shimmer {
+    background: linear-gradient(
+      100deg,
+      var(--color-gold-pale) 42%,
+      #fff8e7 50%,
+      var(--color-gold-pale) 58%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gold-shimmer 9s ease-in-out infinite;
+  }
+
+  /* Ornament rules draw outward once on load */
+  @keyframes ornament-draw {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .ornament-draw::before {
+    transform-origin: right center;
+    animation: ornament-draw 1.4s 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  .ornament-draw::after {
+    transform-origin: left center;
+    animation: ornament-draw 1.4s 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  /* Wizard step content eases in on step change */
+  @keyframes step-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.65rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .step-in {
+    animation: step-in 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  /* Gentle continuous float for decorative marks */
+  @keyframes soft-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-0.4rem);
+    }
+  }
+
+  .soft-float {
+    animation: soft-float 5.5s ease-in-out infinite;
+  }
+}
+
+/* ————— Print styles for the order-of-service program ————— */
+@media print {
+  @page {
+    size: letter;
+    margin: 0.55in;
+  }
+  body {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-page {
+    break-after: page;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    min-height: auto !important;
+  }
+  .print-page:last-child {
+    break-after: auto;
+  }
+}
