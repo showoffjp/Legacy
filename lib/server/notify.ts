@@ -32,9 +32,11 @@ export interface MessageRow {
   created_at: string;
 }
 
+type DeliveryStatus = "sent" | "queued" | "failed";
+
 interface Transport {
   name: string;
-  deliver(msg: OutgoingMessage): Promise<"sent" | "queued">;
+  deliver(msg: OutgoingMessage): Promise<DeliveryStatus>;
 }
 
 /** Demo transport: the outbox row itself is the delivery record. */
@@ -43,10 +45,64 @@ const outboxOnly: Transport = {
   deliver: async () => "queued",
 };
 
+/** Resend (https://resend.com) — live email when RESEND_API_KEY is set. */
+async function deliverEmail(msg: OutgoingMessage): Promise<DeliveryStatus> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return "queued";
+  // Placeholder partner addresses stay in the outbox — nothing real to reach.
+  if (msg.recipient.endsWith(".example.com") || msg.recipient.endsWith("@legacy.example")) {
+    return "queued";
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: process.env.EMAIL_FROM || "Legacy <onboarding@resend.dev>",
+        to: [msg.recipient],
+        subject: msg.subject || "A message from Legacy",
+        text: msg.body,
+      }),
+    });
+    return res.ok ? "sent" : "failed";
+  } catch {
+    return "failed";
+  }
+}
+
+/** Twilio — live SMS when TWILIO_ACCOUNT_SID/AUTH_TOKEN/FROM are set. */
+async function deliverSms(msg: OutgoingMessage): Promise<DeliveryStatus> {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_FROM;
+  if (!sid || !token || !from) return "queued";
+  try {
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ From: from, To: msg.recipient, Body: msg.body }).toString(),
+      },
+    );
+    return res.ok ? "sent" : "failed";
+  } catch {
+    return "failed";
+  }
+}
+
+const liveTransport: Transport = {
+  name: "live",
+  deliver: (msg) => (msg.channel === "email" ? deliverEmail(msg) : deliverSms(msg)),
+};
+
 function getTransport(): Transport {
-  // Future: return an SMTP/Twilio transport when credentials are configured
-  // (e.g. SMTP_URL / TWILIO_AUTH_TOKEN). Demo builds record to the outbox.
-  return outboxOnly;
+  const emailLive = Boolean(process.env.RESEND_API_KEY);
+  const smsLive = Boolean(process.env.TWILIO_ACCOUNT_SID);
+  return emailLive || smsLive ? liveTransport : outboxOnly;
 }
 
 export async function sendMessage(msg: OutgoingMessage): Promise<string> {

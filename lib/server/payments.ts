@@ -4,12 +4,14 @@ import { sendMessage } from "@/lib/server/notify";
 import { PACKAGES } from "@/lib/data/vendors";
 
 /**
- * Payments are built behind a provider interface. The bundled "demo"
- * provider completes checkout on an in-app confirmation page and marks the
- * order paid — no card details are ever asked for. A Stripe provider slots
- * in by implementing `PaymentProvider` (createCheckout returning the
- * Stripe-hosted URL, plus a webhook marking the order paid) and selecting
- * it when STRIPE_SECRET_KEY is configured.
+ * Payments are built behind a provider interface.
+ *
+ * - With STRIPE_SECRET_KEY configured, checkout happens on Stripe's hosted
+ *   page and orders are marked paid by the signature-verified webhook at
+ *   /api/stripe/webhook (plus a session check on the receipt page, so the
+ *   family never waits on webhook latency).
+ * - Without it, the bundled "demo" provider completes checkout on an
+ *   in-app confirmation page — no card details are ever asked for.
  */
 
 export interface OrderRow {
@@ -30,16 +32,85 @@ export interface OrderRow {
 export interface PaymentProvider {
   name: string;
   /** Where to send the customer to complete payment for this order. */
-  checkoutUrl(order: OrderRow): string;
+  beginCheckout(order: OrderRow): Promise<string>;
 }
 
 const demoProvider: PaymentProvider = {
   name: "demo",
-  checkoutUrl: (order) => `/checkout/${order.reference}`,
+  beginCheckout: async (order) => `/checkout/${order.reference}`,
+};
+
+const STRIPE_API = "https://api.stripe.com/v1";
+
+function stripeKey(): string | null {
+  return process.env.STRIPE_SECRET_KEY || null;
+}
+
+async function stripeRequest(
+  path: string,
+  params?: Record<string, string>,
+): Promise<Record<string, unknown>> {
+  const key = stripeKey();
+  if (!key) throw new Error("Stripe is not configured");
+  const res = await fetch(`${STRIPE_API}${path}`, {
+    method: params ? "POST" : "GET",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      ...(params ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+    },
+    body: params ? new URLSearchParams(params).toString() : undefined,
+  });
+  const body = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) {
+    const err = body.error as { message?: string } | undefined;
+    throw new Error(err?.message || `Stripe request failed (${res.status})`);
+  }
+  return body;
+}
+
+const stripeProvider: PaymentProvider = {
+  name: "stripe",
+  async beginCheckout(order) {
+    const { SITE_URL } = await import("@/lib/site");
+    const session = await stripeRequest("/checkout/sessions", {
+      mode: "payment",
+      "line_items[0][quantity]": "1",
+      "line_items[0][price_data][currency]": "usd",
+      "line_items[0][price_data][unit_amount]": String(order.amount_usd * 100),
+      "line_items[0][price_data][product_data][name]": `Legacy — ${order.package_name}`,
+      customer_email: order.contact_email,
+      "metadata[reference]": order.reference,
+      success_url: `${SITE_URL}/checkout/${order.reference}/receipt?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${SITE_URL}/checkout/${order.reference}`,
+    });
+    return String(session.url);
+  },
 };
 
 export function getPaymentProvider(): PaymentProvider {
-  return demoProvider;
+  return stripeKey() ? stripeProvider : demoProvider;
+}
+
+/**
+ * Receipt-page fallback: confirm a Stripe session directly so the family
+ * sees their receipt even if the webhook has not landed yet.
+ */
+export async function confirmStripeSession(
+  reference: string,
+  sessionId: string,
+): Promise<boolean> {
+  if (!stripeKey()) return false;
+  try {
+    const session = await stripeRequest(`/checkout/sessions/${encodeURIComponent(sessionId)}`);
+    const metadata = session.metadata as { reference?: string } | undefined;
+    if (session.payment_status === "paid" && metadata?.reference === reference) {
+      await markOrderPaid(reference);
+      return true;
+    }
+  } catch {
+    // Verification is best-effort; the webhook remains authoritative.
+  }
+  return false;
 }
 
 export function createOrder(input: {

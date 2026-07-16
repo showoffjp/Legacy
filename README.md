@@ -157,6 +157,18 @@ npm run e2e        # full Playwright suite (starts the server itself)
 | `LEGACY_DATA_DIR` | Override the SQLite/data location |
 | `COOKIE_SECURE=1` | Set behind HTTPS in production |
 
+### Going live — flip the switches
+
+The live integrations are already implemented behind the demo defaults; each activates the
+moment its keys exist, and reverts to demo/outbox behavior without them:
+
+| Variable(s) | What turns on |
+|---|---|
+| `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` | Checkout moves to Stripe's hosted payment page; the webhook at `/api/stripe/webhook` (subscribe it to `checkout.session.completed`) marks orders paid, with a session check on the receipt page so families never wait on webhook latency. The in-app demo confirmation stops being able to complete orders. |
+| `RESEND_API_KEY` (+ optional `EMAIL_FROM`) | Outbox emails to families and partners are actually delivered via Resend; the console outbox shows sent/failed status. Placeholder `.example.com` addresses stay queued. |
+| `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN` + `TWILIO_FROM` | Outbox SMS (family confirmations) delivered via Twilio. |
+| `NEXT_PUBLIC_SITE_URL` | Canonical URL for share links, sitemaps, and Stripe redirect URLs. |
+
 ## Deploying
 
 ### Docker / any VM (recommended — full persistence)

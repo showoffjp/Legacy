@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ButtonLink, Card, Container, VerseBlock, formatUsd } from "@/components/ui";
-import { getOrderByReference } from "@/lib/server/payments";
+import { confirmStripeSession, getOrderByReference } from "@/lib/server/payments";
 
 export const dynamic = "force-dynamic";
 
@@ -22,13 +22,21 @@ function formatPaidDate(iso: string): string {
 
 export default async function ReceiptPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ reference: string }>;
+  searchParams: Promise<{ session_id?: string }>;
 }) {
   const { reference } = await params;
-  const order = getOrderByReference(reference);
+  const { session_id } = await searchParams;
+  let order = getOrderByReference(reference);
   if (!order) redirect("/pricing");
-  if (order.status !== "paid") redirect(`/checkout/${reference}`);
+  if (order.status !== "paid" && session_id) {
+    // Returning from Stripe ahead of the webhook — verify the session now.
+    await confirmStripeSession(reference, session_id);
+    order = getOrderByReference(reference);
+  }
+  if (!order || order.status !== "paid") redirect(`/checkout/${reference}`);
 
   return (
     <div className="pb-24">
