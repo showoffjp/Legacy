@@ -17,10 +17,13 @@ import { listCoordinationRequestsForUser } from "@/lib/server/coordination";
 import { listOrdersForUser } from "@/lib/server/payments";
 import {
   condolenceCount,
+  giftSummary,
   listMemorialsForOwner,
   mealSummary,
   rsvpSummary,
 } from "@/lib/server/memorials";
+import { listRequestMessages } from "@/lib/server/messaging";
+import { RequestThread } from "@/components/request-thread";
 import type { ServiceKind, ServicePlan } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -120,9 +123,14 @@ export default async function DashboardPage() {
               </h1>
               <p className="mt-2 text-sm text-ink-faint">{user.email}</p>
             </div>
-            <form action={signOut}>
-              <Button variant="outline">Sign out</Button>
-            </form>
+            <div className="flex items-center gap-2">
+              <ButtonLink variant="ghost" href="/account/settings">
+                Settings
+              </ButtonLink>
+              <form action={signOut}>
+                <Button variant="outline">Sign out</Button>
+              </form>
+            </div>
           </div>
         </Container>
       </section>
@@ -223,6 +231,12 @@ export default async function DashboardPage() {
                           {meals.dishes === 1
                             ? `1 dish promised for the repast (serves ~${meals.serves})`
                             : `${meals.dishes} dishes promised for the repast (serves ~${meals.serves})`}
+                          {(() => {
+                            const gifts = giftSummary(memorial.slug);
+                            return gifts.gifts > 0
+                              ? ` · ${gifts.gifts === 1 ? "1 memorial gift" : `${gifts.gifts} memorial gifts`}`
+                              : "";
+                          })()}
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -266,6 +280,11 @@ export default async function DashboardPage() {
                         ? `The service for ${lovedOne}, in our coordinators' care.`
                         : "This plan is in our coordinators' care."}
                     </p>
+                    <RequestThread
+                      requestId={request.id}
+                      messages={listRequestMessages(request.id)}
+                      viewerRole="family"
+                    />
                   </Card>
                 );
               })}

@@ -6,11 +6,13 @@ import { hymnById } from "@/lib/data/hymns";
 import type { Hymn, Memorial } from "@/lib/types";
 import {
   getPublishedMemorial,
+  giftSummary,
   listCondolences,
   listMealOffers,
   type PublishedMemorial,
 } from "@/lib/server/memorials";
 import { MealTrain } from "@/components/memorials/meal-train";
+import { MemorialGifts } from "@/components/memorials/gift-form";
 import { Card, Container, SectionHeading, VerseBlock, formatLongDate } from "@/components/ui";
 import { Guestbook } from "@/components/memorials/guestbook";
 import { ServerGuestbook } from "@/components/memorials/server-guestbook";
@@ -324,6 +326,13 @@ function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial }) {
 
         {hasServiceDetails ? (
           <MealTrain slug={memorial.slug} initialOffers={mealOffers} />
+        ) : null}
+        {d.giftsNote ? (
+          <MemorialGifts
+            slug={memorial.slug}
+            giftsNote={d.giftsNote}
+            initialCount={giftSummary(memorial.slug).gifts}
+          />
         ) : null}
         <StorySection story={d.story} />
         <HymnsSection hymns={hymns} />

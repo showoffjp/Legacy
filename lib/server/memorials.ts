@@ -20,6 +20,8 @@ export interface PublishedMemorialData {
   survivedBy: string;
   hymnIds: string[];
   portraitDataUrl: string;
+  /** "In lieu of flowers" — the ministry or cause the family designates. */
+  giftsNote?: string;
   service: {
     kind: string;
     date: string;
@@ -207,6 +209,7 @@ export interface OwnerMemorialPatch {
   survivedBy?: string;
   nickname?: string;
   locationText?: string;
+  giftsNote?: string;
   service?: PublishedMemorialData["service"];
   privacy?: MemorialPrivacy;
 }
@@ -225,6 +228,7 @@ export function updateMemorialByOwner(
     ...(patch.survivedBy !== undefined ? { survivedBy: patch.survivedBy } : null),
     ...(patch.nickname !== undefined ? { nickname: patch.nickname } : null),
     ...(patch.locationText !== undefined ? { locationText: patch.locationText } : null),
+    ...(patch.giftsNote !== undefined ? { giftsNote: patch.giftsNote } : null),
     ...(patch.service !== undefined ? { service: patch.service } : null),
   };
   getDb()
@@ -352,6 +356,49 @@ export function mealSummary(slug: string): { dishes: number; serves: number } {
     )
     .get(slug) as unknown as { dishes: number; serves: number };
   return { dishes: row.dishes, serves: row.serves };
+}
+
+/* ——— Memorial gifts ("in lieu of flowers") ——— */
+
+export interface GiftPledgeRow {
+  id: string;
+  memorial_slug: string;
+  name: string;
+  amount_usd: number;
+  note: string;
+  created_at: string;
+}
+
+export function addGiftPledge(input: {
+  slug: string;
+  name: string;
+  amountUsd: number;
+  note: string;
+}): GiftPledgeRow {
+  const id = randomUUID();
+  const now = nowIso();
+  const amount = Math.max(0, Math.min(100_000, Math.round(input.amountUsd)));
+  getDb()
+    .prepare(
+      "INSERT INTO gift_pledges (id, memorial_slug, name, amount_usd, note, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+    )
+    .run(id, input.slug, input.name, amount, input.note, now);
+  return { id, memorial_slug: input.slug, name: input.name, amount_usd: amount, note: input.note, created_at: now };
+}
+
+export function listGiftPledges(slug: string): GiftPledgeRow[] {
+  return getDb()
+    .prepare("SELECT * FROM gift_pledges WHERE memorial_slug = ? ORDER BY created_at DESC")
+    .all(slug) as unknown as GiftPledgeRow[];
+}
+
+export function giftSummary(slug: string): { gifts: number; total: number } {
+  const row = getDb()
+    .prepare(
+      "SELECT COUNT(*) AS gifts, COALESCE(SUM(amount_usd), 0) AS total FROM gift_pledges WHERE memorial_slug = ?",
+    )
+    .get(slug) as unknown as { gifts: number; total: number };
+  return { gifts: row.gifts, total: row.total };
 }
 
 export function condolenceCount(slug: string): number {

@@ -42,6 +42,7 @@ export async function updateMemorialAction(
     survivedBy: String(formData.get("survivedBy") ?? "").trim(),
     nickname: String(formData.get("nickname") ?? "").trim(),
     locationText: String(formData.get("locationText") ?? "").trim(),
+    giftsNote: String(formData.get("giftsNote") ?? "").trim(),
     service: hasService
       ? { kind, date: serviceDate, time: serviceTime, venueName, city, state, livestream }
       : null,

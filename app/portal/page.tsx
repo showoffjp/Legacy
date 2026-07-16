@@ -5,6 +5,8 @@ import { signOut } from "@/app/account/actions";
 import { Badge, Button, Card, Container, formatLongDate } from "@/components/ui";
 import { getCurrentUser } from "@/lib/server/auth";
 import { getPartnerLink, listRequestsForPartner } from "@/lib/server/portal";
+import { listRequestMessages, type RequestMessageRow } from "@/lib/server/messaging";
+import { RequestThread } from "@/components/request-thread";
 import type { CoordinationRequestRow } from "@/lib/server/coordination";
 import type { ServicePlan } from "@/lib/types";
 import { casketById } from "@/lib/data/caskets";
@@ -41,7 +43,13 @@ function formatWhen(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
-function RequestCard({ request }: { request: CoordinationRequestRow }) {
+function RequestCard({
+  request,
+  messages,
+}: {
+  request: CoordinationRequestRow;
+  messages: RequestMessageRow[];
+}) {
   const plan = parsePlan(request.plan_json);
   const lovedOne = plan?.deceased?.fullName || "A family's loved one";
   const when = [
@@ -118,6 +126,8 @@ function RequestCard({ request }: { request: CoordinationRequestRow }) {
         </dl>
       </details>
 
+      <RequestThread requestId={request.id} messages={messages} viewerRole="partner" />
+
       <form
         action={partnerUpdateStatus}
         className="mt-5 flex flex-wrap items-end gap-3 border-t border-line pt-4"
@@ -173,9 +183,17 @@ export default async function PortalPage() {
                 {user.email}
               </p>
             </div>
-            <form action={signOut}>
-              <Button variant="outline">Sign out</Button>
-            </form>
+            <div className="flex items-center gap-2">
+              <a
+                href="/account/settings"
+                className="rounded-full px-4 py-2 text-sm font-medium text-gold-deep transition-colors hover:bg-gold-pale/50"
+              >
+                Settings
+              </a>
+              <form action={signOut}>
+                <Button variant="outline">Sign out</Button>
+              </form>
+            </div>
           </div>
         </Container>
       </header>
@@ -189,7 +207,13 @@ export default async function PortalPage() {
             </p>
           </Card>
         ) : (
-          requests.map((request) => <RequestCard key={request.id} request={request} />)
+          requests.map((request) => (
+            <RequestCard
+              key={request.id}
+              request={request}
+              messages={listRequestMessages(request.id)}
+            />
+          ))
         )}
         <p className="text-xs text-ink-faint">
           Questions about a request? Call the Legacy coordination desk any hour — families are

@@ -131,6 +131,18 @@ export function MemorialEditForm({ memorial }: { memorial: PublishedMemorial }) 
         </fieldset>
 
         <Field
+          label="Memorial gifts — in lieu of flowers"
+          hint="Name the ministry or cause; a gifts section appears on the page and every recorded gift is gathered below for your thank-you cards. Leave blank for none."
+        >
+          <input
+            name="giftsNote"
+            defaultValue={d.giftsNote ?? ""}
+            className={inputCls}
+            placeholder="In lieu of flowers, the family invites gifts to the First Baptist building fund."
+          />
+        </Field>
+
+        <Field
           label="Who can find this page"
           hint="Link-only pages stay reachable by anyone with the link, but are not listed publicly."
         >

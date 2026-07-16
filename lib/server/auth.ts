@@ -161,6 +161,28 @@ export function createUser(input: {
   return { id, email: input.email.trim().toLowerCase(), name: input.name.trim(), role: input.role ?? "family" };
 }
 
+/** Verify the current password and set a new one. */
+export function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+): { ok: boolean; error?: string } {
+  const row = getDb()
+    .prepare("SELECT password_hash FROM users WHERE id = ?")
+    .get(userId) as unknown as { password_hash: string } | undefined;
+  if (!row) return { ok: false, error: "Account not found." };
+  if (!verifyPassword(currentPassword, row.password_hash)) {
+    return { ok: false, error: "Your current password does not match our records." };
+  }
+  if (newPassword.length < 8) {
+    return { ok: false, error: "Please choose a new password of at least 8 characters." };
+  }
+  getDb()
+    .prepare("UPDATE users SET password_hash = ? WHERE id = ?")
+    .run(hashPassword(newPassword), userId);
+  return { ok: true };
+}
+
 /**
  * Seed the demo coordinator account on first use so the console at /admin
  * is reachable out of the box. Documented in the README.

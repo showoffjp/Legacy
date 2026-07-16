@@ -152,6 +152,24 @@ function migrate(db: DatabaseSync): void {
       created_at    TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS request_messages (
+      id          TEXT PRIMARY KEY,
+      request_id  TEXT NOT NULL REFERENCES coordination_requests(id) ON DELETE CASCADE,
+      author_role TEXT NOT NULL,
+      author_name TEXT NOT NULL,
+      body        TEXT NOT NULL,
+      created_at  TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS gift_pledges (
+      id            TEXT PRIMARY KEY,
+      memorial_slug TEXT NOT NULL REFERENCES memorials(slug) ON DELETE CASCADE,
+      name          TEXT NOT NULL,
+      amount_usd    INTEGER NOT NULL DEFAULT 0,
+      note          TEXT NOT NULL DEFAULT '',
+      created_at    TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS messages (
       id           TEXT PRIMARY KEY,
       channel      TEXT NOT NULL,

@@ -14,6 +14,8 @@ import {
   rsvpSummary,
 } from "@/lib/server/memorials";
 import { listPortalAccounts } from "@/lib/server/portal";
+import { listRequestMessages } from "@/lib/server/messaging";
+import { RequestThread } from "@/components/request-thread";
 import { InvitePartnerForm } from "@/components/admin/invite-partner-form";
 import { FUNERAL_HOMES } from "@/lib/data/funeral-homes";
 import { CLERGY } from "@/lib/data/clergy";
@@ -265,6 +267,12 @@ function RequestCard({ request }: { request: CoordinationRequestRow }) {
           <PlanDetails plan={plan} />
         </div>
       </details>
+
+      <RequestThread
+        requestId={request.id}
+        messages={listRequestMessages(request.id)}
+        viewerRole="coordinator"
+      />
 
       <StatusForm
         action={updateRequestStatus}
