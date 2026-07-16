@@ -215,6 +215,7 @@ function migrate(db: DatabaseSync): void {
   // Additive migrations for databases created before these columns existed.
   addColumnIfMissing(db, "memorials", "privacy TEXT NOT NULL DEFAULT 'public'");
   addColumnIfMissing(db, "plans", "share_code TEXT");
+  addColumnIfMissing(db, "orders", "funding_json TEXT NOT NULL DEFAULT ''");
 }
 
 function addColumnIfMissing(db: DatabaseSync, table: string, columnDef: string): void {

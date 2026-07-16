@@ -122,6 +122,11 @@ network; onboarding below is real.)
 - **Checkout** (`/pricing` → `/checkout`) — three transparent packages and à la carte services
   behind a pluggable `PaymentProvider` (the included demo provider completes without charging;
   Stripe implements the same interface).
+- **Insurance-assignment funding** — the way most at-need services are actually paid for: at
+  checkout the family can assign a life-insurance policy instead of paying today. The order is
+  held with **nothing due from the family**, the coordinator verifies the policy in the console
+  (assignment-pending → assignment-verified → funded), the demo/Stripe payment path is sealed
+  off for these orders, and the benefit's balance beyond the package stays with the family.
 
 ### 🤍 Care beyond the arrangements
 
@@ -163,7 +168,7 @@ The year after the service, carried together:
 | Messaging | `Transport` interface (`lib/server/notify.ts`) — outbox now, SMTP/Twilio later |
 | Payments | `PaymentProvider` interface (`lib/server/payments.ts`) — demo now, Stripe later |
 | Client state | The family's plan lives in `localStorage` and syncs to the account when signed in |
-| Tests | Playwright E2E suite in `e2e/` (eight specs), run by GitHub Actions CI on every push/PR |
+| Tests | Playwright E2E suite in `e2e/` (nine specs), run by GitHub Actions CI on every push/PR |
 
 The interfaces are the architecture: swapping SQLite for Postgres, the outbox for Resend/Twilio,
 or the demo provider for Stripe touches only `lib/server/` — no page changes.
@@ -237,8 +242,8 @@ database (first item on the roadmap).
 
 - **Hosted database** — swap SQLite for Postgres (Neon/Supabase/RDS) behind the existing
   `lib/server/` helpers; migrations and backups.
-- **Real payments** — Stripe Checkout + webhooks behind `PaymentProvider`; payment plans;
-  life-insurance assignment intake (a standard way families fund services).
+- **Real payments, deepened** — Stripe Checkout + webhooks and life-insurance assignment intake
+  ship today; next: payment plans and assignment e-signature with insurer API verification.
 - **Real messaging** — SMTP (Resend/Postmark) and Twilio SMS transports behind `Transport`, with
   delivery status tracked in the outbox the console already shows.
 - **Real partner network** — the portal exists (`/portal`); next: verification workflow

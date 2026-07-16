@@ -27,6 +27,29 @@ export interface OrderRow {
   status: string;
   created_at: string;
   paid_at: string | null;
+  funding_json: string;
+}
+
+/**
+ * Life-insurance assignment — how most at-need families actually fund a
+ * service. No money is due today; the benefit is assigned to cover the
+ * package and the balance of the policy still flows to the family.
+ */
+export interface AssignmentFunding {
+  insurer: string;
+  policyNumber: string;
+  policyholder: string;
+  faceAmountUsd: number;
+  phone: string;
+}
+
+export function parseFunding(order: OrderRow): AssignmentFunding | null {
+  if (!order.funding_json) return null;
+  try {
+    return JSON.parse(order.funding_json) as AssignmentFunding;
+  } catch {
+    return null;
+  }
 }
 
 export interface PaymentProvider {
@@ -143,6 +166,71 @@ export function createOrder(input: {
       now,
     );
   return getOrderByReference(reference);
+}
+
+/**
+ * Record an insurance-assignment order. Nothing is charged; the
+ * coordinator verifies the assignment with the insurer, and the order
+ * moves assignment-pending → assignment-verified → paid (funded).
+ */
+export async function createAssignmentOrder(input: {
+  userId: string | null;
+  packageId: string;
+  contactName: string;
+  contactEmail: string;
+  funding: AssignmentFunding;
+}): Promise<OrderRow | null> {
+  const pkg = PACKAGES.find((p) => p.id === input.packageId);
+  if (!pkg) return null;
+  const id = randomUUID();
+  const reference = makeReference("ORD");
+  getDb()
+    .prepare(
+      `INSERT INTO orders
+         (id, reference, user_id, package_id, package_name, amount_usd, contact_name, contact_email, provider, status, created_at, funding_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'insurance-assignment', 'assignment-pending', ?, ?)`,
+    )
+    .run(
+      id,
+      reference,
+      input.userId,
+      pkg.id,
+      pkg.name,
+      pkg.priceUsd,
+      input.contactName,
+      input.contactEmail,
+      nowIso(),
+      JSON.stringify(input.funding),
+    );
+
+  await sendMessage({
+    channel: "email",
+    recipient: input.contactEmail,
+    subject: `Your arrangements are held — reference ${reference}`,
+    body: `Dear ${input.contactName},\n\nYour ${pkg.name} package is held under reference ${reference}, funded by assignment of the ${input.funding.insurer} policy for ${input.funding.policyholder}. Nothing is due from your family today.\n\nA Legacy coordinator will call shortly with the one-page assignment form to sign, and we verify the policy with the insurer — usually within one business day. The benefit pays the package directly, and everything beyond it still flows to your family.\n\n"And my God shall supply all your need according to his riches in glory by Christ Jesus." — Philippians 4:19\n\nWith you in this hour,\nLegacy`,
+    relatedType: "order",
+    relatedId: id,
+  });
+
+  return getOrderByReference(reference);
+}
+
+/** Console statuses an assignment order may move through. */
+export const ASSIGNMENT_STATUSES = ["assignment-pending", "assignment-verified", "paid"] as const;
+
+export async function setAssignmentStatus(id: string, status: string): Promise<boolean> {
+  if (!(ASSIGNMENT_STATUSES as readonly string[]).includes(status)) return false;
+  const row = getDb().prepare("SELECT * FROM orders WHERE id = ?").get(id) as
+    | unknown
+    | undefined;
+  const order = row as OrderRow | undefined;
+  if (!order || order.provider !== "insurance-assignment") return false;
+  if (status === "paid") {
+    await markOrderPaid(order.reference);
+    return true;
+  }
+  getDb().prepare("UPDATE orders SET status = ? WHERE id = ?").run(status, id);
+  return true;
 }
 
 export function getOrderByReference(reference: string): OrderRow | null {

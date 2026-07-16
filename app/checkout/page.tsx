@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Card, Container, formatUsd } from "@/components/ui";
-import { ContactForm } from "@/components/checkout/contact-form";
+import { FundingChoice } from "@/components/checkout/funding-choice";
 import { PACKAGES } from "@/lib/data/vendors";
 
 export const metadata: Metadata = {
@@ -64,14 +64,15 @@ export default async function CheckoutPage({
               </p>
             </Card>
 
-            {/* Contact details */}
+            {/* Contact details & funding */}
             <Card className="h-fit p-8">
               <h2 className="font-display text-2xl font-medium text-ink">Your details</h2>
               <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
-                We only need a name and an email to hold your arrangements.
+                Pay today, or fund the service with a life insurance policy — most families do,
+                and nothing is due while we verify it.
               </p>
               <div className="mt-6">
-                <ContactForm packageId={pkg.id} />
+                <FundingChoice packageId={pkg.id} />
               </div>
             </Card>
           </div>

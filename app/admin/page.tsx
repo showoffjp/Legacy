@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import {
   unpublishMemorialAction,
   updateApplicationStatus,
+  updateAssignmentStatus,
   updateRequestStatus,
 } from "@/app/admin/actions";
 import {
@@ -33,7 +34,12 @@ import {
   listPartnerApplications,
   type PartnerApplicationRow,
 } from "@/lib/server/partners";
-import { listOrders, type OrderRow } from "@/lib/server/payments";
+import {
+  ASSIGNMENT_STATUSES,
+  listOrders,
+  parseFunding,
+  type OrderRow,
+} from "@/lib/server/payments";
 import type { ServicePlan } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -344,6 +350,7 @@ function ApplicationCard({ application }: { application: PartnerApplicationRow }
 /* ——— Orders ——— */
 
 function OrderCard({ order }: { order: OrderRow }) {
+  const funding = order.provider === "insurance-assignment" ? parseFunding(order) : null;
   return (
     <Card className="p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -360,15 +367,40 @@ function OrderCard({ order }: { order: OrderRow }) {
           <p className="font-display text-xl font-medium text-ink">
             {formatUsd(order.amount_usd)}
           </p>
-          <Badge tone={order.status === "paid" ? "sage" : "ink"}>
+          <Badge
+            tone={
+              order.status === "paid"
+                ? "sage"
+                : order.status === "assignment-verified"
+                  ? "gold"
+                  : "ink"
+            }
+          >
             {humanize(order.status)}
           </Badge>
         </div>
       </div>
+      {funding ? (
+        <p className="mt-3 rounded-xl bg-gold-pale/40 px-4 py-2.5 text-sm text-ink-soft">
+          🤝 Insurance assignment — {funding.insurer}
+          {funding.policyNumber ? ` · policy ${funding.policyNumber}` : ""} · in the name of{" "}
+          {funding.policyholder}
+          {funding.faceAmountUsd > 0 ? ` · ~${formatUsd(funding.faceAmountUsd)} benefit` : ""}
+          {funding.phone ? ` · ${funding.phone}` : ""}
+        </p>
+      ) : null}
       <p className="mt-3 text-xs text-ink-faint">
         Placed {formatTimestamp(order.created_at)}
         {order.paid_at ? ` · Paid ${formatTimestamp(order.paid_at)}` : ""}
       </p>
+      {funding && order.status !== "paid" ? (
+        <StatusForm
+          action={updateAssignmentStatus}
+          id={order.id}
+          current={order.status}
+          statuses={ASSIGNMENT_STATUSES}
+        />
+      ) : null}
     </Card>
   );
 }

@@ -58,6 +58,8 @@ const REQUEST_TONES: Record<string, BadgeTone> = {
 
 const ORDER_TONES: Record<string, BadgeTone> = {
   pending: "ink",
+  "assignment-pending": "gold",
+  "assignment-verified": "sage",
   paid: "sage",
 };
 
@@ -423,10 +425,16 @@ export default async function DashboardPage() {
                         href={
                           order.status === "paid"
                             ? `/checkout/${order.reference}/receipt`
-                            : `/checkout/${order.reference}`
+                            : order.provider === "insurance-assignment"
+                              ? `/checkout/${order.reference}/assignment`
+                              : `/checkout/${order.reference}`
                         }
                       >
-                        {order.status === "paid" ? "View receipt" : "Complete payment"}
+                        {order.status === "paid"
+                          ? "View receipt"
+                          : order.provider === "insurance-assignment"
+                            ? "View arrangement"
+                            : "Complete payment"}
                       </ButtonLink>
                     </div>
                   </div>

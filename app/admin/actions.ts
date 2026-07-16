@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/server/auth";
 import { setCoordinationStatus } from "@/lib/server/coordination";
 import { setApplicationStatus } from "@/lib/server/partners";
+import { setAssignmentStatus } from "@/lib/server/payments";
 import { unpublishMemorial } from "@/lib/server/memorials";
 import { invitePartner, type PartnerKind } from "@/lib/server/portal";
 
@@ -25,6 +26,14 @@ export async function updateApplicationStatus(formData: FormData): Promise<void>
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
   if (id) setApplicationStatus(id, status);
+  revalidatePath("/admin");
+}
+
+export async function updateAssignmentStatus(formData: FormData): Promise<void> {
+  if (!(await requireCoordinator())) return;
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "");
+  if (id) await setAssignmentStatus(id, status);
   revalidatePath("/admin");
 }
 

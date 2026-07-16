@@ -63,6 +63,10 @@ export default function PricingPage() {
             itemized before you commit to anything, and we honor the FTC Funeral Rule — you
             may choose only what you need, and you will see every price before you decide.
           </p>
+          <p className="mt-4 rounded-full border border-gold/40 bg-gold-pale/40 px-5 py-2 text-sm text-gold-deep">
+            🤝 Life insurance assignments accepted at checkout — nothing due from your family
+            today.
+          </p>
         </Container>
       </section>
 

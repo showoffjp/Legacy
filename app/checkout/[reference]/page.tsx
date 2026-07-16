@@ -20,6 +20,8 @@ export default async function PaymentPage({
   const order = getOrderByReference(reference);
   if (!order) redirect("/pricing");
   if (order.status === "paid") redirect(`/checkout/${reference}/receipt`);
+  // Assignment-funded orders never pass through a payment step.
+  if (order.provider === "insurance-assignment") redirect(`/checkout/${reference}/assignment`);
 
   return (
     <div className="pb-24">
