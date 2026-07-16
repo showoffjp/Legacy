@@ -41,6 +41,8 @@ export function watchErrors(page, sink, label) {
   page.on("console", (m) => {
     if (m.type() === "error") {
       const where = m.location()?.url ? ` [${m.location().url}]` : "";
+      // Browsers probe /favicon.ico on server-action redirects; not an app resource.
+      if (where.includes("favicon.ico")) return;
       sink.push(`${label} console: ${m.text()}${where}`);
     }
   });

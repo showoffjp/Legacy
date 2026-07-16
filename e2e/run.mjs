@@ -12,6 +12,7 @@ const SPECS = [
   "wishes.spec.mjs",
   "tribute.spec.mjs",
   "lifecycle.spec.mjs",
+  "portal.spec.mjs",
 ];
 
 async function serverUp() {

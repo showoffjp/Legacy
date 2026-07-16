@@ -9,10 +9,14 @@ import {
 } from "@/app/admin/actions";
 import {
   condolenceCount,
-  listPublishedMemorials,
+  listAllPublishedMemorials,
   mealSummary,
   rsvpSummary,
 } from "@/lib/server/memorials";
+import { listPortalAccounts } from "@/lib/server/portal";
+import { InvitePartnerForm } from "@/components/admin/invite-partner-form";
+import { FUNERAL_HOMES } from "@/lib/data/funeral-homes";
+import { CLERGY } from "@/lib/data/clergy";
 import { categoryLabel } from "@/components/partners/categories";
 import { Badge, Button, Card, Container, formatLongDate, formatUsd } from "@/components/ui";
 import { clergyById } from "@/lib/data/clergy";
@@ -408,7 +412,16 @@ export default async function AdminPage() {
   const applications = listPartnerApplications();
   const orders = listOrders();
   const messages = listMessages();
-  const memorials = listPublishedMemorials();
+  const memorials = listAllPublishedMemorials();
+  const portalAccounts = listPortalAccounts();
+  const homeOptions = FUNERAL_HOMES.map((h) => ({
+    id: h.id,
+    label: `${h.name} — ${h.location.city}, ${h.location.state}`,
+  }));
+  const clergyOptions = CLERGY.map((c) => ({
+    id: c.id,
+    label: `${c.name} (${c.denomination}) — ${c.location.city}, ${c.location.state}`,
+  }));
 
   const openRequests = requests.filter((r) => r.status !== "completed").length;
 
@@ -469,6 +482,31 @@ export default async function AdminPage() {
           ) : (
             orders.map((order) => <OrderCard key={order.id} order={order} />)
           )}
+        </ConsoleSection>
+
+        <ConsoleSection
+          title="Partner portal accounts"
+          count={pluralize(portalAccounts.length, "account")}
+          note="Open a portal for a funeral home or minister — their coordination requests arrive there, and their status updates flow straight back to the family's dashboard."
+        >
+          <Card className="p-6">
+            <InvitePartnerForm funeralHomes={homeOptions} clergy={clergyOptions} />
+          </Card>
+          {portalAccounts.map((account) => (
+            <Card key={account.user_id} className="p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-display text-lg font-medium text-ink">{account.org_name}</p>
+                  <p className="mt-0.5 text-sm text-ink-faint">
+                    {account.name} · {account.email}
+                  </p>
+                </div>
+                <Badge tone={account.kind === "funeral-home" ? "gold" : "sage"}>
+                  {account.kind === "funeral-home" ? "Funeral home" : "Clergy"}
+                </Badge>
+              </div>
+            </Card>
+          ))}
         </ConsoleSection>
 
         <ConsoleSection

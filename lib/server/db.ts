@@ -112,6 +112,7 @@ function migrate(db: DatabaseSync): void {
       owner_id   TEXT,
       data       TEXT NOT NULL,
       published  INTEGER NOT NULL DEFAULT 1,
+      privacy    TEXT NOT NULL DEFAULT 'public',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -132,6 +133,13 @@ function migrate(db: DatabaseSync): void {
       guests        INTEGER NOT NULL DEFAULT 1,
       note          TEXT NOT NULL DEFAULT '',
       created_at    TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS partner_links (
+      user_id  TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      kind     TEXT NOT NULL,
+      ref_id   TEXT NOT NULL,
+      org_name TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS meal_offers (
@@ -156,6 +164,17 @@ function migrate(db: DatabaseSync): void {
       created_at   TEXT NOT NULL
     );
   `);
+
+  // Additive migrations for databases created before these columns existed.
+  addColumnIfMissing(db, "memorials", "privacy TEXT NOT NULL DEFAULT 'public'");
+}
+
+function addColumnIfMissing(db: DatabaseSync, table: string, columnDef: string): void {
+  try {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
+  } catch {
+    // Column already exists — the migration has run before.
+  }
 }
 
 export function nowIso(): string {

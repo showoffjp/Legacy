@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 interface NavUser {
   name: string;
-  role: "family" | "coordinator";
+  role: "family" | "coordinator" | "partner";
 }
 
 const LINKS = [
@@ -31,8 +31,20 @@ export function SiteNav() {
       .catch(() => {});
   }, [pathname]);
 
-  const accountHref = user ? (user.role === "coordinator" ? "/admin" : "/account/dashboard") : "/account";
-  const accountLabel = user ? (user.role === "coordinator" ? "Console" : "My Family") : "Sign in";
+  const accountHref = user
+    ? user.role === "coordinator"
+      ? "/admin"
+      : user.role === "partner"
+        ? "/portal"
+        : "/account/dashboard"
+    : "/account";
+  const accountLabel = user
+    ? user.role === "coordinator"
+      ? "Console"
+      : user.role === "partner"
+        ? "Portal"
+        : "My Family"
+    : "Sign in";
 
   return (
     <header className="no-print sticky top-0 z-50 border-b border-line bg-parchment/90 backdrop-blur">

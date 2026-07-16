@@ -99,7 +99,15 @@ network; onboarding below is real.)
   queued confirmation.
 - **Coordinator console** (`/admin`) — every request with the full plan, partner applications,
   orders, the message outbox, and published-memorial moderation (unpublish hides a page without
-  deleting its records), all with inline status updates.
+  deleting its records), all with inline status updates — plus **partner portal invitations**:
+  open a portal account for any directory funeral home or minister (temporary password delivered
+  via the outbox).
+- **Partner portal** (`/portal`) — invited funeral homes and clergy sign in to receive the
+  coordination requests addressed to them: the family's contact, the loved one, the full plan,
+  and inline status updates that appear on the family's dashboard the moment they are made.
+- **Memorial management** (`/account/memorials/<slug>`) — owners edit their published memorial's
+  story, nickname, community, and service details; choose **public or link-only** privacy
+  (link-only pages stay reachable but unlisted); or unpublish — every record kept.
 - **Checkout** (`/pricing` → `/checkout`) — three transparent packages and à la carte services
   behind a pluggable `PaymentProvider` (the included demo provider completes without charging;
   Stripe implements the same interface).
@@ -190,9 +198,9 @@ database (first item on the roadmap).
   life-insurance assignment intake (a standard way families fund services).
 - **Real messaging** — SMTP (Resend/Postmark) and Twilio SMS transports behind `Transport`, with
   delivery status tracked in the outbox the console already shows.
-- **Real partner network** — verification workflow (licensing, references), partner sign-ins, and
-  a partner portal where funeral homes and clergy receive, confirm, and update coordination
-  requests themselves.
+- **Real partner network** — the portal exists (`/portal`); next: verification workflow
+  (licensing, references), partner-initiated onboarding to portal accounts, and in-portal
+  messaging with families and coordinators.
 - **File storage** — portraits, memorial photo galleries, and tribute assets in S3/R2 instead of
   data URLs.
 - **Family collaboration** — multiple plans per account, inviting co-planners (siblings sharing

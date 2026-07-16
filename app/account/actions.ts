@@ -50,7 +50,13 @@ export async function signIn(
   }
 
   await createSessionCookie(user.id);
-  redirect(user.role === "coordinator" ? "/admin" : "/account/dashboard");
+  redirect(
+    user.role === "coordinator"
+      ? "/admin"
+      : user.role === "partner"
+        ? "/portal"
+        : "/account/dashboard",
+  );
 }
 
 export async function signOut(): Promise<void> {

@@ -225,9 +225,14 @@ export default async function DashboardPage() {
                             : `${meals.dishes} dishes promised for the repast (serves ~${meals.serves})`}
                         </p>
                       </div>
-                      <ButtonLink variant="ghost" href={`/memorials/${memorial.slug}`}>
-                        Visit the memorial
-                      </ButtonLink>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ButtonLink variant="ghost" href={`/memorials/${memorial.slug}`}>
+                          Visit the memorial
+                        </ButtonLink>
+                        <ButtonLink variant="outline" href={`/account/memorials/${memorial.slug}`}>
+                          Manage
+                        </ButtonLink>
+                      </div>
                     </div>
                   </Card>
                 );

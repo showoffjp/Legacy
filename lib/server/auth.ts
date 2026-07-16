@@ -14,7 +14,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: "family" | "coordinator";
+  role: "family" | "coordinator" | "partner";
 }
 
 interface UserRow {
@@ -113,12 +113,9 @@ export async function destroySessionCookie(): Promise<void> {
 }
 
 function toUser(row: UserRow): User {
-  return {
-    id: row.id,
-    email: row.email,
-    name: row.name,
-    role: row.role === "coordinator" ? "coordinator" : "family",
-  };
+  const role =
+    row.role === "coordinator" || row.role === "partner" ? row.role : "family";
+  return { id: row.id, email: row.email, name: row.name, role };
 }
 
 export async function getCurrentUser(): Promise<User | null> {
@@ -147,7 +144,7 @@ export function createUser(input: {
   email: string;
   name: string;
   password: string;
-  role?: "family" | "coordinator";
+  role?: User["role"];
 }): User {
   const db = getDb();
   const id = randomUUID();

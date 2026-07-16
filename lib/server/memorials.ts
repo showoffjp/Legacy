@@ -31,10 +31,13 @@ export interface PublishedMemorialData {
   } | null;
 }
 
+export type MemorialPrivacy = "public" | "link-only";
+
 export interface PublishedMemorial {
   slug: string;
   ownerId: string | null;
   data: PublishedMemorialData;
+  privacy: MemorialPrivacy;
   createdAt: string;
 }
 
@@ -61,6 +64,7 @@ interface MemorialRow {
   owner_id: string | null;
   data: string;
   published: number;
+  privacy: string;
   created_at: string;
   updated_at: string;
 }
@@ -144,6 +148,7 @@ function rowToMemorial(row: MemorialRow): PublishedMemorial | null {
       slug: row.slug,
       ownerId: row.owner_id,
       data: JSON.parse(row.data) as PublishedMemorialData,
+      privacy: row.privacy === "link-only" ? "link-only" : "public",
       createdAt: row.created_at,
     };
   } catch {
@@ -158,7 +163,18 @@ export function getPublishedMemorial(slug: string): PublishedMemorial | null {
   return row ? rowToMemorial(row) : null;
 }
 
+/** Publicly listed memorials — link-only pages stay reachable but unlisted. */
 export function listPublishedMemorials(limit = 50): PublishedMemorial[] {
+  const rows = getDb()
+    .prepare(
+      "SELECT * FROM memorials WHERE published = 1 AND privacy = 'public' ORDER BY created_at DESC LIMIT ?",
+    )
+    .all(limit) as unknown as MemorialRow[];
+  return rows.map(rowToMemorial).filter((m): m is PublishedMemorial => m !== null);
+}
+
+/** Every published memorial regardless of privacy — for the coordinator console. */
+export function listAllPublishedMemorials(limit = 100): PublishedMemorial[] {
   const rows = getDb()
     .prepare("SELECT * FROM memorials WHERE published = 1 ORDER BY created_at DESC LIMIT ?")
     .all(limit) as unknown as MemorialRow[];
@@ -177,6 +193,56 @@ export function unpublishMemorial(slug: string): void {
   getDb()
     .prepare("UPDATE memorials SET published = 0, updated_at = ? WHERE slug = ?")
     .run(nowIso(), slug);
+}
+
+export function getMemorialForOwner(slug: string, ownerId: string): PublishedMemorial | null {
+  const row = getDb()
+    .prepare("SELECT * FROM memorials WHERE slug = ? AND owner_id = ? AND published = 1")
+    .get(slug, ownerId) as unknown as MemorialRow | undefined;
+  return row ? rowToMemorial(row) : null;
+}
+
+export interface OwnerMemorialPatch {
+  story?: string[];
+  survivedBy?: string;
+  nickname?: string;
+  locationText?: string;
+  service?: PublishedMemorialData["service"];
+  privacy?: MemorialPrivacy;
+}
+
+/** Owner editing — merges content into the stored page. */
+export function updateMemorialByOwner(
+  slug: string,
+  ownerId: string,
+  patch: OwnerMemorialPatch,
+): boolean {
+  const memorial = getMemorialForOwner(slug, ownerId);
+  if (!memorial) return false;
+  const data: PublishedMemorialData = {
+    ...memorial.data,
+    ...(patch.story !== undefined ? { story: patch.story } : null),
+    ...(patch.survivedBy !== undefined ? { survivedBy: patch.survivedBy } : null),
+    ...(patch.nickname !== undefined ? { nickname: patch.nickname } : null),
+    ...(patch.locationText !== undefined ? { locationText: patch.locationText } : null),
+    ...(patch.service !== undefined ? { service: patch.service } : null),
+  };
+  getDb()
+    .prepare("UPDATE memorials SET data = ?, privacy = ?, updated_at = ? WHERE slug = ?")
+    .run(
+      JSON.stringify(data),
+      patch.privacy ?? memorial.privacy,
+      nowIso(),
+      slug,
+    );
+  return true;
+}
+
+export function unpublishMemorialByOwner(slug: string, ownerId: string): boolean {
+  const memorial = getMemorialForOwner(slug, ownerId);
+  if (!memorial) return false;
+  unpublishMemorial(slug);
+  return true;
 }
 
 /* ——— Condolences ——— */
