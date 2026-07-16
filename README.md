@@ -60,6 +60,13 @@ Every keepsake is generated live from the plan and printed with one click:
 - **Acknowledgment cards** (`/plan/cards`) — four matching thank-you cards per sheet with cut
   guides.
 - **Letter of Wishes** (`/plan/wishes`) — the pre-planning document above.
+- **The eulogy, gently drafted** (`/plan/eulogy`) — a blank page is cruel in the week of a loss,
+  so the studio asks small, human questions ("Tell one story that captures them", "What did they
+  teach you without ever calling it a lesson?") and weaves the answers into a first draft — in
+  the family's own words, with their chosen pronouns and a verse to hold the room, always theirs
+  to edit. A speaking-time estimate (~130 words a minute) and a **large-type pulpit copy** help
+  whoever stands up to speak. Everything stays on the device; nothing is uploaded or
+  machine-generated — the words are the family's own, arranged.
 
 ### 🎞️ Tribute video studio — `/tribute`
 
@@ -156,7 +163,7 @@ The year after the service, carried together:
 | Messaging | `Transport` interface (`lib/server/notify.ts`) — outbox now, SMTP/Twilio later |
 | Payments | `PaymentProvider` interface (`lib/server/payments.ts`) — demo now, Stripe later |
 | Client state | The family's plan lives in `localStorage` and syncs to the account when signed in |
-| Tests | Playwright E2E suite in `e2e/` (seven specs), run by GitHub Actions CI on every push/PR |
+| Tests | Playwright E2E suite in `e2e/` (eight specs), run by GitHub Actions CI on every push/PR |
 
 The interfaces are the architecture: swapping SQLite for Postgres, the outbox for Resend/Twilio,
 or the demo provider for Stripe touches only `lib/server/` — no page changes.
@@ -252,9 +259,9 @@ database (first item on the roadmap).
   player and its recording living on the memorial page afterward.
 - **Higher-fidelity tribute films** — optional server-side rendering to MP4/1080p with more
   motion styles, licensed hymn recordings, and voice-over recording.
-- **Writing help, gently offered** — optional AI-assisted drafting of the obituary and eulogy
-  from interview prompts ("Tell me about her kitchen…"), always in the family's voice and always
-  theirs to edit.
+- **Writing help, deepened** — the interview-woven eulogy studio ships today (`/plan/eulogy`);
+  next: optional AI assistance for the obituary and eulogy, always in the family's voice and
+  always theirs to edit.
 - **The grief year, deepened** — the milestone notes ship today (`/aftercare`); next: prompts
   for the family to gather, and integration with GriefShare group finders.
 - **Church partnership portal** — congregations connect their sanctuary calendar, choir and AV

@@ -14,6 +14,7 @@ const SPECS = [
   "lifecycle.spec.mjs",
   "portal.spec.mjs",
   "aftercare.spec.mjs",
+  "eulogy.spec.mjs",
 ];
 
 async function serverUp() {

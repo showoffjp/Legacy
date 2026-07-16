@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/plan",
     "/plan/program",
     "/plan/obituary",
+    "/plan/eulogy",
     "/plan/wishes",
     "/plan/cards",
     "/tribute",

@@ -9,6 +9,7 @@ const FOOTER_LINKS = [
       { href: "/services", label: "Every Service" },
       { href: "/plan/program", label: "Service Program" },
       { href: "/plan/obituary", label: "The Obituary" },
+      { href: "/plan/eulogy", label: "Write the Eulogy" },
       { href: "/plan/wishes", label: "Letter of Wishes" },
       { href: "/plan/cards", label: "Acknowledgment Cards" },
       { href: "/pricing", label: "Packages & Pricing" },

@@ -196,6 +196,9 @@ export function StepReview() {
           <ButtonLink href="/plan/obituary" variant="outline-inverse">
             📰 The obituary
           </ButtonLink>
+          <ButtonLink href="/plan/eulogy" variant="outline-inverse">
+            ✒️ Write the eulogy
+          </ButtonLink>
           <ButtonLink href="/plan/cards" variant="outline-inverse">
             💌 Acknowledgment cards
           </ButtonLink>

@@ -120,6 +120,13 @@ const SERVICE_GROUPS: {
         linkLabel: "Create the tribute",
       },
       {
+        icon: "✒️",
+        title: "The eulogy, gently drafted",
+        text: "Small, human questions woven into a first draft in your own words — always yours to edit — with a large-type pulpit copy for the one who speaks.",
+        href: "/plan/eulogy",
+        linkLabel: "Write the eulogy",
+      },
+      {
         icon: "📹",
         title: "Livestream for family afar",
         text: "A produced stream on a private family link with a keepsake recording — for everyone who could not travel.",
