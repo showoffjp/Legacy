@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   updateMemorialAction,
@@ -23,12 +23,53 @@ function SaveButton() {
   );
 }
 
+/** Downscale a gallery photograph so eight of them store comfortably. */
+async function fileToGalleryDataUrl(file: File): Promise<string> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = reject;
+    el.src = dataUrl;
+  });
+  const max = 900;
+  const scale = Math.min(1, max / Math.max(img.width, img.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return dataUrl;
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.78);
+}
+
 export function MemorialEditForm({ memorial }: { memorial: PublishedMemorial }) {
   const [state, formAction] = useActionState<EditMemorialState, FormData>(updateMemorialAction, {
     ok: false,
     error: "",
   });
   const d = memorial.data;
+  const [photos, setPhotos] = useState<string[]>(d.photos ?? []);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  async function addPhotos(files: FileList | null) {
+    if (!files) return;
+    const additions: string[] = [];
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) continue;
+      try {
+        additions.push(await fileToGalleryDataUrl(file));
+      } catch {
+        // Skip unreadable files.
+      }
+    }
+    setPhotos((prev) => [...prev, ...additions].slice(0, 8));
+  }
 
   return (
     <div className="space-y-8">
@@ -128,6 +169,59 @@ export function MemorialEditForm({ memorial }: { memorial: PublishedMemorial }) 
             />
             Note that the service will be livestreamed
           </label>
+        </fieldset>
+
+        <fieldset className="rounded-2xl border border-line bg-white/70 p-5">
+          <legend className="px-2 text-sm font-medium text-ink">
+            Gallery — a life in pictures
+          </legend>
+          <input type="hidden" name="photos" value={JSON.stringify(photos)} />
+          <p className="text-xs text-ink-faint">
+            Up to eight photographs, shown on the memorial page. They are resized gently in your
+            browser before saving.
+          </p>
+          {photos.length > 0 ? (
+            <ul className="mt-4 grid grid-cols-4 gap-3">
+              {photos.map((photo, i) => (
+                <li key={i} className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo}
+                    alt={`Gallery photograph ${i + 1}`}
+                    className="aspect-square w-full rounded-xl border border-line object-cover"
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Remove photograph ${i + 1}`}
+                    onClick={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-parchment shadow-soft hover:bg-red-700"
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => photoInputRef.current?.click()}
+            disabled={photos.length >= 8}
+            className="mt-4 rounded-xl border border-dashed border-line bg-parchment px-4 py-3 text-sm font-medium text-ink-soft transition-colors hover:border-gold hover:text-gold-deep disabled:opacity-50"
+          >
+            + Add photographs {photos.length > 0 ? `(${photos.length}/8)` : ""}
+          </button>
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            aria-label="Add gallery photographs"
+            onChange={(e) => {
+              addPhotos(e.target.files);
+              e.target.value = "";
+            }}
+          />
         </fieldset>
 
         <Field

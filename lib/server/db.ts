@@ -60,6 +60,12 @@ function migrate(db: DatabaseSync): void {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS plan_members (
+      user_id  TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      joined_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS coordination_requests (
       id              TEXT PRIMARY KEY,
       reference       TEXT NOT NULL UNIQUE,
@@ -185,6 +191,7 @@ function migrate(db: DatabaseSync): void {
 
   // Additive migrations for databases created before these columns existed.
   addColumnIfMissing(db, "memorials", "privacy TEXT NOT NULL DEFAULT 'public'");
+  addColumnIfMissing(db, "plans", "share_code TEXT");
 }
 
 function addColumnIfMissing(db: DatabaseSync, table: string, columnDef: string): void {

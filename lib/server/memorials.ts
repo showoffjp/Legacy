@@ -22,6 +22,8 @@ export interface PublishedMemorialData {
   portraitDataUrl: string;
   /** "In lieu of flowers" — the ministry or cause the family designates. */
   giftsNote?: string;
+  /** Gallery photographs (downscaled data URLs, capped). */
+  photos?: string[];
   service: {
     kind: string;
     date: string;
@@ -210,8 +212,23 @@ export interface OwnerMemorialPatch {
   nickname?: string;
   locationText?: string;
   giftsNote?: string;
+  photos?: string[];
   service?: PublishedMemorialData["service"];
   privacy?: MemorialPrivacy;
+}
+
+const MAX_GALLERY_PHOTOS = 8;
+const MAX_PHOTO_BYTES = 400_000;
+
+/** Keep only well-formed, reasonably sized gallery images. */
+export function sanitizeGalleryPhotos(photos: unknown): string[] {
+  if (!Array.isArray(photos)) return [];
+  return photos
+    .filter(
+      (p): p is string =>
+        typeof p === "string" && p.startsWith("data:image/") && p.length <= MAX_PHOTO_BYTES,
+    )
+    .slice(0, MAX_GALLERY_PHOTOS);
 }
 
 /** Owner editing — merges content into the stored page. */
@@ -229,6 +246,7 @@ export function updateMemorialByOwner(
     ...(patch.nickname !== undefined ? { nickname: patch.nickname } : null),
     ...(patch.locationText !== undefined ? { locationText: patch.locationText } : null),
     ...(patch.giftsNote !== undefined ? { giftsNote: patch.giftsNote } : null),
+    ...(patch.photos !== undefined ? { photos: sanitizeGalleryPhotos(patch.photos) } : null),
     ...(patch.service !== undefined ? { service: patch.service } : null),
   };
   getDb()

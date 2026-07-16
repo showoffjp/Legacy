@@ -334,6 +334,22 @@ function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial }) {
             initialCount={giftSummary(memorial.slug).gifts}
           />
         ) : null}
+        {d.photos && d.photos.length > 0 ? (
+          <section aria-label="Photo gallery">
+            <SectionHeading eyebrow="Moments held close" title="A Life in Pictures" />
+            <div className="mx-auto mt-10 grid max-w-4xl grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {d.photos.map((photo, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={i}
+                  src={photo}
+                  alt={`A photograph of ${d.fullName}`}
+                  className="aspect-square w-full rounded-2xl border border-line object-cover shadow-soft transition-transform duration-300 hover:scale-[1.03]"
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
         <StorySection story={d.story} />
         <HymnsSection hymns={hymns} />
         <SurvivedBySection text={d.survivedBy} />

@@ -5,7 +5,7 @@
  * the confirmation. Plus: owner edits their memorial and sets link-only
  * privacy (unlisted but reachable).
  */
-import { BASE, launch, makeChecker, watchErrors } from "./helpers.mjs";
+import { ARTIFACTS, BASE, launch, makeChecker, watchErrors } from "./helpers.mjs";
 
 const { check, summary } = makeChecker("portal");
 const errors = [];
@@ -66,9 +66,21 @@ await link.waitFor({ timeout: 15000 });
 const memorialHref = await link.getAttribute("href");
 const slug = memorialHref?.split("/").pop() ?? "";
 
+// Two "family photographs" for the gallery
+const galleryFiles = [];
+for (const [i, path] of ["/resources", "/pricing"].entries()) {
+  await fam.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
+  const file = `${ARTIFACTS}gallery-${i}.png`;
+  await fam.screenshot({ path: file });
+  galleryFiles.push(file);
+}
+
 await fam.goto(`${BASE}/account/memorials/${slug}`, { waitUntil: "networkidle" });
 check("manage page reachable by owner", (await fam.locator("h1").textContent())?.includes("Managing") ?? false);
 await fam.getByLabel("Their story", { exact: false }).fill("She hummed hymns while she gardened.\nHer table was never short a chair. (edited)");
+await fam.locator('input[aria-label="Add gallery photographs"]').setInputFiles(galleryFiles);
+await fam.getByText("(2/8)").waitFor({ timeout: 15000 });
+check("gallery photographs staged", true);
 await fam.getByLabel(/Memorial gifts/).fill("In lieu of flowers, the family invites gifts to the First Baptist building fund.");
 await fam.getByLabel(/Who can find this page/).selectOption("link-only");
 await fam.getByRole("button", { name: "Save the memorial" }).click();
@@ -85,6 +97,10 @@ const pageText = await fam.locator("main").textContent();
 check("link-only memorial reachable by link", pageText?.includes("Eleanor Mae Thompson") ?? false);
 check("edited story shown", pageText?.includes("(edited)") ?? false);
 check("gifts section shown", pageText?.includes("Memorial Gifts") ?? false);
+check(
+  "gallery shows both photographs",
+  (await fam.locator('img[alt^="A photograph of"]').count()) === 2,
+);
 
 // A guest records a gift in their memory
 const gifts = fam.locator('section[aria-label="Memorial gifts"]');
@@ -186,7 +202,31 @@ const dash = await fam2.locator("main").textContent();
 check("family dashboard shows confirmed status", /confirmed/i.test(dash ?? ""));
 check("family sees the partner's reply", dash?.includes("consider it done") ?? false);
 check("family sees the memorial gift tally", dash?.includes("1 memorial gift") ?? false);
+const famCode = (dash?.match(/FAM-[A-Z0-9]{6}/) || [""])[0];
+check(`family code shown (${famCode})`, famCode.startsWith("FAM-"));
 await fam2.close();
+
+/* ——— A sibling joins the plan with the family code ——— */
+const sib = await (await browser.newContext({ viewport: { width: 1440, height: 1000 } })).newPage();
+watchErrors(sib, errors, "sibling");
+await sib.goto(`${BASE}/account`, { waitUntil: "networkidle" });
+await sib.getByRole("button", { name: /Create an account/i }).first().click();
+await sib.getByLabel(/name/i).first().fill("Samuel Thompson");
+await sib.getByLabel(/email/i).first().fill(`samuel.${stamp}@example.com`);
+await sib.getByLabel(/password/i).first().fill(pass);
+await sib.getByRole("button", { name: /create|begin|sign up/i }).last().click();
+await sib.waitForURL("**/account/dashboard", { timeout: 15000 });
+await sib.getByPlaceholder("FAM-______").fill(famCode);
+await sib.getByRole("button", { name: /Join their plan/ }).click();
+await sib.getByText(/carrying this plan together with/).waitFor({ timeout: 15000 });
+check("sibling joined the shared plan", true);
+await sib.goto(`${BASE}/plan`, { waitUntil: "networkidle" });
+await sib.waitForTimeout(1500);
+check(
+  "sibling sees the shared plan in the wizard",
+  (await sib.getByLabel("Full name").inputValue()) === "Eleanor Mae Thompson",
+);
+await sib.close();
 
 await browser.close();
 summary(errors);

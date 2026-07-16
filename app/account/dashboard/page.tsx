@@ -12,7 +12,14 @@ import {
   formatUsd,
 } from "@/components/ui";
 import { getCurrentUser } from "@/lib/server/auth";
-import { getPlanForUser } from "@/lib/server/plans";
+import {
+  getOrCreateShareCode,
+  getPlanForUser,
+  joinedPlanOwner,
+  listPlanMembers,
+} from "@/lib/server/plans";
+import { leavePlanAction } from "@/app/account/dashboard/actions";
+import { JoinPlanForm } from "@/components/account/plan-together";
 import { listCoordinationRequestsForUser } from "@/lib/server/coordination";
 import { listOrdersForUser } from "@/lib/server/payments";
 import {
@@ -203,6 +210,62 @@ export default async function DashboardPage() {
               </div>
             </Card>
           )}
+        </DashboardSection>
+
+        <DashboardSection title="Planning together">
+          {(() => {
+            const joined = user.role === "family" ? joinedPlanOwner(user.id) : null;
+            if (joined) {
+              return (
+                <Card className="p-7">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <p className="text-sm leading-relaxed text-ink-soft">
+                      You are carrying this plan together with{" "}
+                      <span className="font-medium text-ink">{joined.name}</span> — every change
+                      either of you makes is shared.
+                    </p>
+                    <form action={leavePlanAction}>
+                      <Button type="submit" variant="outline">
+                        Leave the shared plan
+                      </Button>
+                    </form>
+                  </div>
+                </Card>
+              );
+            }
+            const code = plan ? getOrCreateShareCode(user.id) : null;
+            const members = listPlanMembers(user.id);
+            return (
+              <Card className="p-7">
+                <p className="text-sm leading-relaxed text-ink-soft">
+                  No one should plan a farewell alone. Share your family code and a signed-in
+                  family member can carry this plan with you — same choices, both dashboards.
+                </p>
+                {code ? (
+                  <p className="mt-4 flex flex-wrap items-center gap-3">
+                    <span className="rounded-xl border border-gold/40 bg-gold-pale/40 px-4 py-2 font-mono text-lg font-semibold tracking-widest text-gold-deep">
+                      {code}
+                    </span>
+                    <span className="text-xs text-ink-faint">
+                      {members.length === 0
+                        ? "Give this code to family you trust."
+                        : `Planning with: ${members.map((m) => m.name).join(", ")}`}
+                    </span>
+                  </p>
+                ) : (
+                  <p className="mt-3 text-xs text-ink-faint">
+                    Begin a plan first — your family code appears here.
+                  </p>
+                )}
+                <div className="mt-5 border-t border-line pt-5">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.15em] text-ink-faint">
+                    Were you given a code?
+                  </p>
+                  <JoinPlanForm />
+                </div>
+              </Card>
+            );
+          })()}
         </DashboardSection>
 
         {memorials.length > 0 ? (

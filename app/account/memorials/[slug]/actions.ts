@@ -43,6 +43,13 @@ export async function updateMemorialAction(
     nickname: String(formData.get("nickname") ?? "").trim(),
     locationText: String(formData.get("locationText") ?? "").trim(),
     giftsNote: String(formData.get("giftsNote") ?? "").trim(),
+    photos: (() => {
+      try {
+        return JSON.parse(String(formData.get("photos") ?? "[]")) as string[];
+      } catch {
+        return [];
+      }
+    })(),
     service: hasService
       ? { kind, date: serviceDate, time: serviceTime, venueName, city, state, livestream }
       : null,
