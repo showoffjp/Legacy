@@ -297,8 +297,12 @@ export function TributeStudio() {
 
   return (
     <div className="bg-parchment">
-      <section className="border-b border-line bg-night text-parchment">
-        <Container className="py-12 text-center">
+      <section className="relative overflow-hidden border-b border-line bg-night text-parchment">
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="hero-glow hero-glow-gold" style={{ opacity: 0.6 }} />
+          <div className="hero-glow hero-glow-sage" style={{ opacity: 0.5 }} />
+        </div>
+        <Container className="relative py-12 text-center">
           <span className="ornament justify-center text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-gold-pale">
             The tribute studio
           </span>

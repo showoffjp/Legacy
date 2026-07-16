@@ -13,6 +13,13 @@ export const CATEGORY_LABELS: Record<PartnerCategory, string> = {
   monument: "Monuments & markers",
   catering: "Repast catering",
   livestream: "Livestreaming",
+  transportation: "Transportation & procession",
+  musicians: "Musicians & vocalists",
+  cemetery: "Cemetery & burial property",
+  "grief-support": "Grief support & counseling",
+  legal: "Legal & estate services",
+  lodging: "Family lodging",
+  keepsakes: "Keepsakes & remembrances",
 };
 
 /** Label for a stored category value, falling back to the raw value. */

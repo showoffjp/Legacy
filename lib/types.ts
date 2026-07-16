@@ -57,6 +57,15 @@ export interface Casket {
   description: string;
 }
 
+export interface ServiceAddon {
+  id: string;
+  name: string;
+  icon: string;
+  category: "honors" | "tribute" | "family-care" | "after";
+  priceFromUsd: number;
+  description: string;
+}
+
 export interface FlowerArrangement {
   id: string;
   name: string;
@@ -94,7 +103,19 @@ export interface Clergy {
 export interface Vendor {
   id: string;
   name: string;
-  category: "florist" | "casket-provider" | "monument" | "catering" | "livestream";
+  category:
+    | "florist"
+    | "casket-provider"
+    | "monument"
+    | "catering"
+    | "livestream"
+    | "transportation"
+    | "musicians"
+    | "cemetery"
+    | "grief-support"
+    | "legal"
+    | "lodging"
+    | "keepsakes";
   location: GeoLocation;
   phone: string;
   website: string;
@@ -172,6 +193,7 @@ export interface ServicePlan {
   clergyId: string;
   casketId: string;
   flowerIds: string[];
+  addonIds: string[];
   hymnIds: string[];
   scriptureIds: string[];
   program: {
@@ -210,6 +232,7 @@ export const EMPTY_PLAN: ServicePlan = {
   clergyId: "",
   casketId: "",
   flowerIds: [],
+  addonIds: [],
   hymnIds: [],
   scriptureIds: [],
   program: {

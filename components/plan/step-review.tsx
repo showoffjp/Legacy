@@ -7,6 +7,7 @@ import { funeralHomeById } from "@/lib/data/funeral-homes";
 import { clergyById } from "@/lib/data/clergy";
 import { casketById } from "@/lib/data/caskets";
 import { flowerById } from "@/lib/data/flowers";
+import { addonById } from "@/lib/data/addons";
 import { hymnById } from "@/lib/data/hymns";
 import { scriptureById } from "@/lib/data/scriptures";
 
@@ -90,11 +91,14 @@ export function StepReview() {
   const minister = clergyById(plan.clergyId);
   const casket = casketById(plan.casketId);
   const flowers = plan.flowerIds.map(flowerById).filter((f) => f !== undefined);
+  const addons = plan.addonIds.map(addonById).filter((a) => a !== undefined);
   const hymns = plan.hymnIds.map(hymnById).filter((h) => h !== undefined);
   const scriptures = plan.scriptureIds.map(scriptureById).filter((s) => s !== undefined);
 
   const subtotal =
-    (casket?.priceUsd ?? 0) + flowers.reduce((sum, f) => sum + f.priceUsd, 0);
+    (casket?.priceUsd ?? 0) +
+    flowers.reduce((sum, f) => sum + f.priceUsd, 0) +
+    addons.reduce((sum, a) => sum + a.priceFromUsd, 0);
 
   const dates = [plan.deceased.birthDate, plan.deceased.deathDate]
     .filter(Boolean)
@@ -157,10 +161,11 @@ export function StepReview() {
               label="Flowers"
               value={flowers.map((f) => f.name).join(", ")}
             />
+            <Row label="Honors & add-ons" value={addons.map((a) => a.name).join(", ")} />
             <Row label="Hymns" value={hymns.map((h) => h.title).join(", ")} />
             <Row label="Readings" value={scriptures.map((s) => s.reference).join(", ")} />
             {subtotal > 0 ? (
-              <Row label="Selections subtotal" value={formatUsd(subtotal)} />
+              <Row label="Selections subtotal" value={`from ${formatUsd(subtotal)}`} />
             ) : null}
           </dl>
         </section>

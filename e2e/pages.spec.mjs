@@ -4,6 +4,7 @@ import { BASE, launch, makeChecker, watchErrors } from "./helpers.mjs";
 const PAGES = [
   ["/", "we carry the details"],
   ["/plan", "Planning a faithful farewell"],
+  ["/services", "Everything a farewell asks"],
   ["/plan/program", "The Order of Service Program"],
   ["/plan/obituary", "The Obituary"],
   ["/plan/wishes", "The Letter of Wishes"],

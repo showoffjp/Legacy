@@ -192,6 +192,15 @@ export function ProgramView() {
             {plan.service.graveside ? (
               <OrderRow left="Committal" right="At the graveside" />
             ) : null}
+            {plan.addonIds.includes("veteran-honors") ? (
+              <OrderRow left="Military Honors" right="Flag presentation & Taps" />
+            ) : null}
+            {plan.addonIds.includes("dove-release") ? (
+              <OrderRow left="Dove Release" right="Following the committal" />
+            ) : null}
+            {plan.addonIds.includes("bagpiper") ? (
+              <OrderRow left="Piper's Farewell" right="“Amazing Grace”" />
+            ) : null}
           </div>
           {plan.service.livestream ? (
             <p className="mt-6 text-center text-xs italic text-ink-faint">

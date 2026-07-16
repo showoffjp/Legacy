@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { Reveal } from "@/components/reveal";
 
 /* Shared UI primitives — keep the whole site speaking one visual language. */
 
@@ -65,7 +66,7 @@ export function SectionHeading({
 }) {
   const alignCls = align === "center" ? "items-center text-center" : "items-start text-left";
   return (
-    <div className={`flex flex-col gap-3 ${alignCls}`}>
+    <Reveal className={`flex flex-col gap-3 ${alignCls}`}>
       {eyebrow ? (
         <span className="ornament text-[0.7rem] font-semibold uppercase tracking-[0.25em]">
           {eyebrow}
@@ -75,7 +76,7 @@ export function SectionHeading({
         {title}
       </h2>
       {lede ? <p className="max-w-2xl text-base leading-relaxed text-ink-soft">{lede}</p> : null}
-    </div>
+    </Reveal>
   );
 }
 
@@ -126,14 +127,14 @@ export function VerseBlock({
   className?: string;
 }) {
   return (
-    <figure className={`mx-auto max-w-3xl text-center ${className}`}>
+    <Reveal as="figure" className={`mx-auto max-w-3xl text-center ${className}`}>
       <blockquote className="font-display text-2xl font-medium italic leading-relaxed text-ink sm:text-3xl">
         “{text}”
       </blockquote>
       <figcaption className="mt-4 text-[0.75rem] font-semibold uppercase tracking-[0.25em] text-gold">
         {reference}
       </figcaption>
-    </figure>
+    </Reveal>
   );
 }
 

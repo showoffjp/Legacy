@@ -66,6 +66,13 @@ const PROVIDER_LABELS: Record<Vendor["category"], string> = {
   monument: "Monuments",
   catering: "Repast catering",
   livestream: "Livestreaming",
+  transportation: "Transportation & procession",
+  musicians: "Musicians",
+  cemetery: "Cemeteries & burial property",
+  "grief-support": "Grief support",
+  legal: "Legal & estate",
+  lodging: "Family lodging",
+  keepsakes: "Keepsakes",
 };
 
 /* ————— The directory ————— */

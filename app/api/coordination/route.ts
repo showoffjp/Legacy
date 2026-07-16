@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     hymnIds: Array.isArray(incoming.hymnIds) ? incoming.hymnIds : [],
     scriptureIds: Array.isArray(incoming.scriptureIds) ? incoming.scriptureIds : [],
     flowerIds: Array.isArray(incoming.flowerIds) ? incoming.flowerIds : [],
+    addonIds: Array.isArray(incoming.addonIds) ? incoming.addonIds : [],
   };
   const user = await getCurrentUser();
   const { reference } = await createCoordinationRequest({

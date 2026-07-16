@@ -11,10 +11,10 @@ interface NavUser {
 
 const LINKS = [
   { href: "/plan", label: "Plan a Service" },
+  { href: "/services", label: "Services" },
   { href: "/tribute", label: "Tribute Videos" },
   { href: "/memorials", label: "Memorials" },
   { href: "/directory", label: "Trusted Directory" },
-  { href: "/checklist", label: "Checklist" },
   { href: "/resources", label: "Grief Resources" },
   { href: "/pricing", label: "Pricing" },
 ];

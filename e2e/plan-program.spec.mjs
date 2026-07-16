@@ -35,20 +35,23 @@ await page.getByRole("button", { name: "Request this minister" }).first().click(
 await page.getByRole("button", { name: "Casket or Urn", exact: true }).click();
 await page.getByRole("button", { name: /Choose · \$2,650/ }).click();
 
+await page.getByRole("button", { name: "Honors & Add-ons", exact: true }).click();
+await page.getByRole("button", { name: /Add · no charge/ }).click(); // Military Funeral Honors
+
 await page.getByRole("button", { name: "Music & Scripture", exact: true }).click();
 await page.getByRole("checkbox").first().check();
 await page.getByText("Psalm 23", { exact: true }).click();
 
 await page.getByRole("button", { name: "Review", exact: true }).click();
 const review = await page.locator("main").textContent();
-for (const expected of ["Deacon Robert Earl Hayes", "Morning Star", "Amazing Grace", "Psalm 23", "The Bethany"]) {
+for (const expected of ["Deacon Robert Earl Hayes", "Morning Star", "Amazing Grace", "Psalm 23", "The Bethany", "Military Funeral Honors"]) {
   check(`review shows ${expected}`, review?.includes(expected) ?? false);
 }
 
 await page.goto(`${BASE}/plan/program`, { waitUntil: "networkidle" });
 await page.waitForTimeout(600);
 const program = await page.locator("main").textContent();
-for (const expected of ["Deacon Robert Earl Hayes", "Order of Service", "Amazing Grace", "Psalm 23", "Morning Star"]) {
+for (const expected of ["Deacon Robert Earl Hayes", "Order of Service", "Amazing Grace", "Psalm 23", "Morning Star", "Military Honors"]) {
   check(`program shows ${expected}`, program?.includes(expected) ?? false);
 }
 

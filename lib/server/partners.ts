@@ -12,6 +12,13 @@ export const PARTNER_CATEGORIES = [
   "monument",
   "catering",
   "livestream",
+  "transportation",
+  "musicians",
+  "cemetery",
+  "grief-support",
+  "legal",
+  "lodging",
+  "keepsakes",
 ] as const;
 
 export type PartnerCategory = (typeof PARTNER_CATEGORIES)[number];

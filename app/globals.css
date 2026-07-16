@@ -55,6 +55,28 @@ body {
   opacity: 0.6;
 }
 
+/* ————— Reveal-on-scroll (active only when html.motion-ok) ————— */
+
+html.motion-ok .reveal {
+  opacity: 0;
+  transform: translateY(1.35rem);
+}
+
+html.motion-ok .reveal.reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) var(--reveal-delay, 0ms),
+    transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) var(--reveal-delay, 0ms);
+}
+
+@media print {
+  html.motion-ok .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 /* ————— Hero ambience: candlelight-at-dawn glows + gentle text rise ————— */
 
 .hero-glow {
@@ -162,6 +184,149 @@ body {
 
   .hero-rise {
     animation: hero-rise 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  /* Faint light rays turning imperceptibly behind the hero */
+  @keyframes rays-turn {
+    from {
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+      transform: translate(-50%, -50%) rotate(360deg);
+    }
+  }
+
+  .hero-rays {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    width: 160rem;
+    height: 160rem;
+    transform: translate(-50%, -50%);
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(236, 223, 194, 0.045) 12deg,
+      transparent 26deg,
+      transparent 96deg,
+      rgba(236, 223, 194, 0.035) 112deg,
+      transparent 128deg,
+      transparent 204deg,
+      rgba(236, 223, 194, 0.05) 218deg,
+      transparent 236deg,
+      transparent 322deg,
+      rgba(236, 223, 194, 0.04) 338deg,
+      transparent 352deg
+    );
+    animation: rays-turn 180s linear infinite;
+    pointer-events: none;
+  }
+
+  /* Rising candle-light motes */
+  @keyframes mote-rise {
+    0% {
+      transform: translate3d(0, 0, 0);
+      opacity: 0;
+    }
+    12% {
+      opacity: var(--mote-peak, 0.5);
+    }
+    85% {
+      opacity: var(--mote-peak, 0.5);
+    }
+    100% {
+      transform: translate3d(var(--mote-sway, 1.5rem), -46rem, 0);
+      opacity: 0;
+    }
+  }
+
+  .hero-mote {
+    position: absolute;
+    bottom: -2rem;
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(236, 223, 194, 0.95), rgba(163, 131, 63, 0.25) 70%, transparent);
+    filter: blur(0.7px);
+    animation: mote-rise var(--mote-duration, 22s) linear infinite;
+    animation-delay: var(--mote-delay, 0s);
+    pointer-events: none;
+  }
+
+  /* Gold shimmer that sweeps across the emphasized hero words */
+  @keyframes gold-shimmer {
+    0%,
+    58% {
+      background-position: 130% 0;
+    }
+    88%,
+    100% {
+      background-position: -30% 0;
+    }
+  }
+
+  .gold-shimmer {
+    background: linear-gradient(
+      100deg,
+      var(--color-gold-pale) 42%,
+      #fff8e7 50%,
+      var(--color-gold-pale) 58%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gold-shimmer 9s ease-in-out infinite;
+  }
+
+  /* Ornament rules draw outward once on load */
+  @keyframes ornament-draw {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .ornament-draw::before {
+    transform-origin: right center;
+    animation: ornament-draw 1.4s 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  .ornament-draw::after {
+    transform-origin: left center;
+    animation: ornament-draw 1.4s 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  /* Wizard step content eases in on step change */
+  @keyframes step-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.65rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .step-in {
+    animation: step-in 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  /* Gentle continuous float for decorative marks */
+  @keyframes soft-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-0.4rem);
+    }
+  }
+
+  .soft-float {
+    animation: soft-float 5.5s ease-in-out infinite;
   }
 }
 

@@ -6,6 +6,7 @@ const FOOTER_LINKS = [
     heading: "Planning",
     links: [
       { href: "/plan", label: "Plan a Service" },
+      { href: "/services", label: "Every Service" },
       { href: "/plan/program", label: "Service Program" },
       { href: "/plan/obituary", label: "The Obituary" },
       { href: "/plan/wishes", label: "Letter of Wishes" },

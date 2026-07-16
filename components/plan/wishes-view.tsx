@@ -7,6 +7,7 @@ import { funeralHomeById } from "@/lib/data/funeral-homes";
 import { clergyById } from "@/lib/data/clergy";
 import { casketById } from "@/lib/data/caskets";
 import { flowerById } from "@/lib/data/flowers";
+import { addonById } from "@/lib/data/addons";
 import { hymnById } from "@/lib/data/hymns";
 import { scriptureById } from "@/lib/data/scriptures";
 
@@ -41,6 +42,7 @@ export function WishesView() {
   const minister = clergyById(plan.clergyId);
   const casket = casketById(plan.casketId);
   const flowers = plan.flowerIds.map(flowerById).filter((f) => f !== undefined);
+  const addons = plan.addonIds.map(addonById).filter((a) => a !== undefined);
   const hymns = plan.hymnIds.map(hymnById).filter((h) => h !== undefined);
   const scriptures = plan.scriptureIds.map(scriptureById).filter((sc) => sc !== undefined);
   const verse = scriptureById(d.favoriteVerseId);
@@ -134,6 +136,7 @@ export function WishesView() {
             value={casket ? `${casket.name} — ${casket.material}` : ""}
           />
           <WishRow label="Flowers" value={flowers.map((f) => f.name).join("; ")} />
+          <WishRow label="Honors & remembrances" value={addons.map((a) => a.name).join("; ")} />
           <WishRow label="Hymns" value={hymns.map((h) => `“${h.title}”`).join(", ")} />
           <WishRow
             label="Scriptures to be read"

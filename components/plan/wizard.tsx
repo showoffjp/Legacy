@@ -8,6 +8,7 @@ import { StepLovedOne } from "@/components/plan/step-loved-one";
 import { StepService } from "@/components/plan/step-service";
 import { StepFuneralHome, StepClergy } from "@/components/plan/step-people";
 import { StepCasket, StepFlowers } from "@/components/plan/step-selections";
+import { StepAddons } from "@/components/plan/step-addons";
 import { StepWorship } from "@/components/plan/step-worship";
 import { StepProgram } from "@/components/plan/step-program";
 import { StepReview } from "@/components/plan/step-review";
@@ -69,6 +70,14 @@ const STEPS: StepDef[] = [
     lede: "Choose any arrangements you would like — or none at all. Many families invite memorial gifts to a ministry instead, and we will note that in the program.",
     isComplete: () => true,
     render: () => <StepFlowers />,
+  },
+  {
+    id: "addons",
+    label: "Honors & Add-ons",
+    heading: "The honors that tell their story",
+    lede: "Military honors, doves at the graveside, a bagpiper, a car for the family, a hotel block for those traveling in — every detail a farewell can ask for, gathered in one place. All of it optional.",
+    isComplete: () => true,
+    render: () => <StepAddons />,
   },
   {
     id: "worship",
@@ -191,7 +200,9 @@ export function PlanWizard() {
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-soft">{step.lede}</p>
             </header>
 
-            <div className="mt-8">{ready ? step.render() : null}</div>
+            <div key={step.id} className="step-in mt-8">
+              {ready ? step.render() : null}
+            </div>
 
             <footer className="mt-10 flex items-center justify-between border-t border-line pt-6">
               <button
