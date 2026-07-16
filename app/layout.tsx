@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Inter } from "next/font/google";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { PlanProvider } from "@/lib/plan-context";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -17,13 +18,28 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const SITE_DESCRIPTION =
+  "A Christian companion for life's final farewell: plan the service, book clergy, choose the casket and flowers, create tribute videos, and print the order of service — every detail carried with reverence.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Legacy — Christian Funeral Planning & Memorials",
     template: "%s · Legacy",
   },
-  description:
-    "A Christian companion for life's final farewell: plan the service, book clergy, choose the casket and flowers, create tribute videos, and print the order of service — every detail carried with reverence.",
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "Legacy",
+    title: "Legacy — Christian Funeral Planning & Memorials",
+    description: SITE_DESCRIPTION,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: "Legacy — Christian Funeral Planning & Memorials",
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
