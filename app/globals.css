@@ -35,12 +35,89 @@ html {
   scroll-behavior: smooth;
 }
 
+/* The whole site rests under a heavenly-blue sky that drifts like weather. */
 body {
-  background-color: var(--color-parchment);
+  background-color: #dce9f6;
+  background-image: linear-gradient(
+    168deg,
+    #eef5fc 0%,
+    #d9e8f6 26%,
+    #c9ddf0 50%,
+    #e2eefa 74%,
+    #f0f6fd 100%
+  );
   color: var(--color-ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* Flowing clouds: soft blurred banks that cross the sky behind all content. */
+.sky-clouds {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sky-clouds span {
+  position: absolute;
+  left: -70rem;
+  top: var(--cloud-top, 10%);
+  width: var(--cloud-w, 60rem);
+  height: var(--cloud-h, 16rem);
+  opacity: var(--cloud-o, 0.7);
+  border-radius: 9999px;
+  filter: blur(56px);
+  will-change: transform;
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 255, 255, 0.4) 55%,
+    transparent 78%
+  );
+}
+.sky-clouds .cloud-blue {
+  background: radial-gradient(
+    closest-side,
+    rgba(201, 220, 241, 0.9),
+    rgba(163, 196, 230, 0.35) 55%,
+    transparent 78%
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes sky-breathe {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  body {
+    background-size: 240% 240%;
+    animation: sky-breathe 44s ease-in-out infinite;
+  }
+
+  @keyframes cloud-drift {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(calc(50vw + 70rem), -1.25rem, 0);
+    }
+    100% {
+      transform: translate3d(calc(100vw + 140rem), 0.75rem, 0);
+    }
+  }
+  .sky-clouds span {
+    animation: cloud-drift var(--cloud-t, 140s) linear infinite;
+    animation-delay: var(--cloud-d, 0s);
+  }
 }
 
 ::selection {
@@ -126,19 +203,10 @@ body {
 
 /* ————— Heavenly-blue theme for the consulting practice ————— */
 
-/* The page floats on a slowly shifting wash of sky blues and parchment.
-   isolation lets the fixed aurora sit between this background and content. */
+/* The consulting pages share the global flowing sky; isolation lets the
+   fixed aurora sit between that background and the content. */
 .consulting-theme {
   isolation: isolate;
-  background: linear-gradient(
-    165deg,
-    #f6fafd 0%,
-    #e7f0fa 20%,
-    #d9e7f5 42%,
-    #ecf3fa 64%,
-    #f3efe4 85%,
-    #f6fafd 100%
-  );
 }
 
 /* Deep heavenly night — hero and footer share the same shifting sky. */
@@ -154,24 +222,9 @@ body {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes heaven-shift {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
-  .consulting-theme {
-    background-size: 220% 220%;
-    animation: heaven-shift 38s ease-in-out infinite;
-  }
   .heaven-night-shift {
     background-size: 260% 260%;
-    animation: heaven-shift 26s ease-in-out infinite;
+    animation: sky-breathe 26s ease-in-out infinite;
   }
 }
 
@@ -758,8 +811,10 @@ html.motion-ok .reveal.reveal-in .ornament::after {
   }
   body {
     background: white !important;
+    animation: none !important;
   }
-  .no-print {
+  .no-print,
+  .sky-clouds {
     display: none !important;
   }
   .print-page {

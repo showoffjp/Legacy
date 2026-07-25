@@ -18,6 +18,25 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+/** Inline CSS vars for one drifting cloud bank. */
+function cloudVars(
+  top: string,
+  w: string,
+  h: string,
+  o: number,
+  t: string,
+  d: string,
+): React.CSSProperties {
+  return {
+    "--cloud-top": top,
+    "--cloud-w": w,
+    "--cloud-h": h,
+    "--cloud-o": o,
+    "--cloud-t": t,
+    "--cloud-d": d,
+  } as React.CSSProperties;
+}
+
 const SITE_DESCRIPTION =
   "A Christian companion for life's final farewell: plan the service, book clergy, choose the casket and flowers, create tribute videos, and print the order of service — every detail carried with reverence.";
 
@@ -57,6 +76,22 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-screen flex-col">
+        {/* Flowing clouds drifting across the site-wide heavenly-blue sky.
+            Deterministic values (no randomness) keep SSR and client identical;
+            negative delays scatter the banks mid-sky on first paint. */}
+        <div aria-hidden className="sky-clouds">
+          <span style={cloudVars("6%", "64rem", "16rem", 0.8, "150s", "-38s")} />
+          <span
+            className="cloud-blue"
+            style={cloudVars("20%", "44rem", "12rem", 0.6, "115s", "-80s")}
+          />
+          <span style={cloudVars("42%", "72rem", "18rem", 0.7, "180s", "-130s")} />
+          <span
+            className="cloud-blue"
+            style={cloudVars("63%", "50rem", "13rem", 0.55, "135s", "-25s")}
+          />
+          <span style={cloudVars("81%", "60rem", "15rem", 0.65, "160s", "-100s")} />
+        </div>
         <PlanProvider>
           <SiteNav />
           <main className="flex-1">{children}</main>
