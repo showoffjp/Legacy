@@ -61,7 +61,7 @@ export function ConsultingFooter() {
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="text-sm text-parchment/70 transition-colors hover:text-parchment"
+                      className="inline-block text-sm text-parchment/70 transition-all duration-200 hover:translate-x-0.5 hover:text-gold-pale"
                     >
                       {l.label}
                     </Link>

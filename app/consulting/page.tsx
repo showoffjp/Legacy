@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import { Reveal } from "@/components/reveal";
 import {
   Badge,
@@ -9,6 +10,8 @@ import {
   SectionHeading,
   VerseBlock,
 } from "@/components/ui";
+import { CountUp } from "@/components/consulting/count-up";
+import { FaqAccordion } from "@/components/consulting/faq";
 import { InquiryForm } from "@/components/consulting/inquiry-form";
 
 export const metadata: Metadata = {
@@ -19,22 +22,48 @@ export const metadata: Metadata = {
 
 const STATS = [
   {
-    figure: "87%",
+    value: 87,
+    suffix: "%",
     label: "of pastors already use AI in some part of ministry",
   },
   {
-    figure: "73%",
+    value: 73,
+    suffix: "%",
     label: "of churches still have no AI policy at all",
   },
   {
-    figure: "71%",
+    value: 71,
+    suffix: "%",
     label: "of pastors say they feel cautious about AI",
   },
   {
-    figure: "87%",
+    value: 87,
+    suffix: "%",
     label: "of church leaders are willing to invest in AI training",
   },
 ];
+
+/* Deterministic candle-mote choreography for the hero (no randomness so
+   server and client render identically). */
+const MOTES: Array<{
+  left: string;
+  delay: string;
+  duration: string;
+  sway: string;
+  peak: number;
+}> = [
+  { left: "8%", delay: "0s", duration: "26s", sway: "1.4rem", peak: 0.4 },
+  { left: "22%", delay: "6s", duration: "21s", sway: "-1rem", peak: 0.55 },
+  { left: "37%", delay: "11s", duration: "29s", sway: "1.8rem", peak: 0.35 },
+  { left: "52%", delay: "3s", duration: "23s", sway: "-1.4rem", peak: 0.5 },
+  { left: "68%", delay: "9s", duration: "27s", sway: "1.1rem", peak: 0.45 },
+  { left: "81%", delay: "1.5s", duration: "22s", sway: "-1.7rem", peak: 0.55 },
+  { left: "93%", delay: "7s", duration: "25s", sway: "1.3rem", peak: 0.4 },
+];
+
+function staggerDelay(index: number, base = 140, step = 70): CSSProperties {
+  return { "--stagger-delay": `${base + index * step}ms` } as CSSProperties;
+}
 
 const WHY_NOW = [
   {
@@ -201,6 +230,24 @@ export default function ConsultingPage() {
         <div aria-hidden className="hero-rays" />
         <div aria-hidden className="hero-glow hero-glow-gold opacity-60" />
         <div aria-hidden className="hero-glow hero-glow-sage" />
+        <div aria-hidden className="hero-glow hero-glow-ember" />
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          {MOTES.map((m) => (
+            <span
+              key={m.left}
+              className="hero-mote"
+              style={
+                {
+                  left: m.left,
+                  "--mote-delay": m.delay,
+                  "--mote-duration": m.duration,
+                  "--mote-sway": m.sway,
+                  "--mote-peak": m.peak,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </div>
         <Container className="relative py-24 sm:py-32">
           <div className="hero-rise mx-auto flex max-w-3xl flex-col items-center text-center">
             <span className="ornament ornament-draw text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-gold-pale">
@@ -229,6 +276,27 @@ export default function ConsultingPage() {
             </p>
           </div>
         </Container>
+        <a
+          href="#why-now"
+          aria-label="Scroll to learn more"
+          className="absolute bottom-5 left-1/2 hidden -translate-x-1/2 text-parchment/50 opacity-60 transition-opacity duration-300 hover:opacity-100 sm:block"
+        >
+          <span className="scroll-cue-bob block">
+            <svg
+              aria-hidden
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </span>
+        </a>
       </section>
 
       {/* Stats band */}
@@ -237,7 +305,9 @@ export default function ConsultingPage() {
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {STATS.map((s, i) => (
               <Reveal key={s.label} delay={i * 90} className="text-center">
-                <p className="font-display text-5xl font-semibold text-gold-deep">{s.figure}</p>
+                <p className="font-display text-5xl font-semibold text-gold-deep">
+                  <CountUp value={s.value} suffix={s.suffix} duration={1400 + i * 150} />
+                </p>
                 <p className="mx-auto mt-2 max-w-[16rem] text-sm leading-relaxed text-ink-soft">
                   {s.label}
                 </p>
@@ -264,7 +334,7 @@ export default function ConsultingPage() {
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {WHY_NOW.map((item, i) => (
               <Reveal key={item.title} delay={i * 110}>
-                <Card className="card-accent card-accent-sage h-full p-7">
+                <Card className="card-accent card-accent-sage card-lift h-full p-7">
                   <Medallion icon={item.icon} tone={i === 0 ? "sage" : i === 1 ? "gold" : "rose"} />
                   <h3 className="mt-5 font-display text-2xl font-semibold text-ink">
                     {item.title}
@@ -288,7 +358,7 @@ export default function ConsultingPage() {
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
             {PILLARS.map((p, i) => (
               <Reveal key={p.title} delay={i * 90}>
-                <Card className={`card-accent ${p.accent} h-full p-7`}>
+                <Card className={`card-accent ${p.accent} card-lift h-full p-7`}>
                   <div className="flex items-start gap-4">
                     <Medallion icon={p.icon} tone={i % 2 === 0 ? "gold" : "sage"} />
                     <div>
@@ -315,8 +385,8 @@ export default function ConsultingPage() {
             {SERVICES.map((s, i) => (
               <Reveal key={s.name} delay={i * 90}>
                 <Card
-                  className={`card-accent card-accent-gold flex h-full flex-col p-7 ${
-                    s.featured ? "border-gold/50 bg-gold-pale/25 shadow-lift" : ""
+                  className={`card-accent card-accent-gold card-lift flex h-full flex-col p-7 ${
+                    s.featured ? "border-gold/50 bg-gold-pale/25 shadow-lift ring-1 ring-gold/20" : ""
                   }`}
                 >
                   {s.featured ? (
@@ -355,14 +425,18 @@ export default function ConsultingPage() {
           />
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             <Reveal>
-              <Card className="card-accent card-accent-sage h-full p-7">
+              <Card className="card-accent card-accent-sage card-lift h-full p-7">
                 <Badge tone="sage">Start here</Badge>
                 <h3 className="mt-4 font-display text-2xl font-semibold text-ink">
                   High value, low controversy
                 </h3>
-                <ul className="mt-5 space-y-3.5">
-                  {USE_CASES_START.map((u) => (
-                    <li key={u.text} className="flex items-start gap-3 text-sm leading-relaxed text-ink-soft">
+                <ul className="stagger mt-5 space-y-3.5">
+                  {USE_CASES_START.map((u, i) => (
+                    <li
+                      key={u.text}
+                      style={staggerDelay(i)}
+                      className="flex items-start gap-3 text-sm leading-relaxed text-ink-soft"
+                    >
                       <span aria-hidden className="mt-px">{u.icon}</span>
                       <span>{u.text}</span>
                     </li>
@@ -371,14 +445,18 @@ export default function ConsultingPage() {
               </Card>
             </Reveal>
             <Reveal delay={110}>
-              <Card className="card-accent card-accent-gold h-full p-7">
+              <Card className="card-accent card-accent-gold card-lift h-full p-7">
                 <Badge tone="gold">Handled with care</Badge>
                 <h3 className="mt-4 font-display text-2xl font-semibold text-ink">
                   Powerful, with guardrails
                 </h3>
-                <ul className="mt-5 space-y-3.5">
-                  {USE_CASES_CARE.map((u) => (
-                    <li key={u.text} className="flex items-start gap-3 text-sm leading-relaxed text-ink-soft">
+                <ul className="stagger mt-5 space-y-3.5">
+                  {USE_CASES_CARE.map((u, i) => (
+                    <li
+                      key={u.text}
+                      style={staggerDelay(i)}
+                      className="flex items-start gap-3 text-sm leading-relaxed text-ink-soft"
+                    >
                       <span aria-hidden className="mt-px">{u.icon}</span>
                       <span>{u.text}</span>
                     </li>
@@ -391,14 +469,18 @@ export default function ConsultingPage() {
               </Card>
             </Reveal>
             <Reveal delay={220}>
-              <Card className="card-accent card-accent-rose h-full bg-night p-7 text-parchment">
+              <Card className="card-accent card-accent-rose card-lift h-full bg-night p-7 text-parchment">
                 <Badge tone="night">Never</Badge>
                 <h3 className="mt-4 font-display text-2xl font-semibold text-parchment">
                   Lines we help you hold
                 </h3>
-                <ul className="mt-5 space-y-4">
-                  {NEVERS.map((n) => (
-                    <li key={n} className="flex items-start gap-3 text-sm leading-relaxed text-parchment/80">
+                <ul className="stagger mt-5 space-y-4">
+                  {NEVERS.map((n, i) => (
+                    <li
+                      key={n}
+                      style={staggerDelay(i)}
+                      className="flex items-start gap-3 text-sm leading-relaxed text-parchment/80"
+                    >
                       <span aria-hidden className="mt-px text-rose-pale">✕</span>
                       <span>{n}</span>
                     </li>
@@ -425,9 +507,11 @@ export default function ConsultingPage() {
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {PROCESS.map((p, i) => (
               <Reveal key={p.title} delay={i * 90}>
-                <Card className="h-full p-7">
-                  <span className="font-display text-4xl font-semibold text-gold/50">{p.step}</span>
-                  <h3 className="mt-2 font-display text-2xl font-semibold text-ink">{p.title}</h3>
+                <Card className="card-lift h-full p-7">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 bg-gold-pale/30 font-display text-xl font-semibold text-gold-deep">
+                    {p.step}
+                  </span>
+                  <h3 className="mt-4 font-display text-2xl font-semibold text-ink">{p.title}</h3>
                   <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">{p.body}</p>
                 </Card>
               </Reveal>
@@ -478,7 +562,7 @@ export default function ConsultingPage() {
                   building software for the most tender moments a church family ever walks
                   through — which taught us something most technology companies never learn:
                 </p>
-                <p className="font-display text-xl italic text-ink">
+                <p className="border-l-2 border-gold/50 pl-4 font-display text-xl italic text-ink">
                   Reverence is a feature. Restraint is a skill.
                 </p>
                 <p>
@@ -500,16 +584,9 @@ export default function ConsultingPage() {
             eyebrow="Common questions"
             title="Asked by nearly every church we meet"
           />
-          <div className="mx-auto mt-12 grid max-w-4xl gap-4">
-            {FAQS.map((f, i) => (
-              <Reveal key={f.q} delay={i * 60}>
-                <Card className="p-6 sm:p-7">
-                  <h3 className="font-display text-xl font-semibold text-ink">{f.q}</h3>
-                  <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">{f.a}</p>
-                </Card>
-              </Reveal>
-            ))}
-          </div>
+          <Reveal className="mx-auto mt-12 max-w-4xl" delay={80}>
+            <FaqAccordion items={FAQS} />
+          </Reveal>
         </Container>
       </section>
 
