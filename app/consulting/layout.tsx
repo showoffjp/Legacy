@@ -29,7 +29,13 @@ export default function ConsultingLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="consulting-theme flex min-h-screen flex-col">
+      {/* Fixed aurora: blue orbs drifting behind everything for depth */}
+      <div aria-hidden className="heaven-aurora">
+        <span className="aurora-1" />
+        <span className="aurora-2" />
+        <span className="aurora-3" />
+      </div>
       <ConsultingNav />
       <div className="flex-1">{children}</div>
       <ConsultingFooter />

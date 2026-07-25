@@ -28,12 +28,12 @@ const FOOTER_LINKS = [
 
 export function ConsultingFooter() {
   return (
-    <footer className="no-print mt-24 bg-night text-parchment/80">
+    <footer className="no-print heaven-night-shift mt-24 text-parchment/80">
       <Container className="py-14">
         <div className="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
             <div className="flex items-baseline gap-2">
-              <span aria-hidden className="text-sage-pale">✦</span>
+              <span aria-hidden className="text-heaven-pale">✦</span>
               <span className="font-display text-2xl font-semibold text-parchment">
                 Steward&nbsp;AI
               </span>
@@ -53,7 +53,7 @@ export function ConsultingFooter() {
 
           {FOOTER_LINKS.map((col) => (
             <div key={col.heading}>
-              <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-sage-pale">
+              <h3 className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-heaven-pale">
                 {col.heading}
               </h3>
               <ul className="mt-4 space-y-2.5">

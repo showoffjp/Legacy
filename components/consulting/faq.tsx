@@ -20,7 +20,7 @@ export function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
           <div key={f.q} style={{ "--stagger-delay": `${80 + i * 70}ms` } as CSSProperties}>
             <div
               className={`rounded-2xl border bg-white/80 shadow-soft transition-colors duration-300 ${
-                open ? "faq-open border-gold/45" : "border-line hover:border-gold/30"
+                open ? "faq-open border-heaven/50" : "border-line hover:border-heaven/35"
               }`}
             >
               <button
@@ -36,7 +36,7 @@ export function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
                   aria-hidden
                   className={`faq-toggle inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-base leading-none ${
                     open
-                      ? "border-gold bg-gold-pale/60 text-gold-deep"
+                      ? "border-heaven bg-heaven-pale/70 text-heaven-deep"
                       : "border-line text-ink-faint"
                   }`}
                 >

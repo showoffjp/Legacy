@@ -10,9 +10,10 @@ import {
   SectionHeading,
   VerseBlock,
 } from "@/components/ui";
-import { CountUp } from "@/components/consulting/count-up";
 import { FaqAccordion } from "@/components/consulting/faq";
+import { Icon, type IconName } from "@/components/consulting/icons";
 import { InquiryForm } from "@/components/consulting/inquiry-form";
+import { StatRing } from "@/components/consulting/stat-ring";
 
 export const metadata: Metadata = {
   title: "AI Consulting for Churches",
@@ -20,25 +21,29 @@ export const metadata: Metadata = {
 
 /* ————— Content ————— */
 
-const STATS = [
+const STATS: Array<{ value: number; suffix: string; label: string; icon: IconName }> = [
   {
     value: 87,
     suffix: "%",
+    icon: "users",
     label: "of pastors already use AI in some part of ministry",
   },
   {
     value: 73,
     suffix: "%",
+    icon: "file-text",
     label: "of churches still have no AI policy at all",
   },
   {
     value: 71,
     suffix: "%",
+    icon: "shield",
     label: "of pastors say they feel cautious about AI",
   },
   {
     value: 87,
     suffix: "%",
+    icon: "graduation",
     label: "of church leaders are willing to invest in AI training",
   },
 ];
@@ -89,30 +94,35 @@ const PILLARS = [
     title: "Wisdom & Policy",
     body: "A written, board-ready AI use policy in plain language: what staff may do, what needs approval, what is off-limits, and how you'll talk about it with the congregation. Grounded in your convictions, not ours.",
     accent: "card-accent-gold",
+    tone: "gold" as const,
   },
   {
     icon: "🛡️",
     title: "Data Reverence",
     body: "Prayer requests, counseling notes, giving records, and anything touching minors are among the most sacred data any organization holds. We lock down what may never enter an AI tool, and configure no-training, zero-retention modes for what may.",
-    accent: "card-accent-sage",
+    accent: "card-accent-heaven",
+    tone: "heaven" as const,
   },
   {
     icon: "⚙️",
     title: "Implementation",
     body: "We deploy the two or three uses that actually give your team hours back — sermon-to-social clips, communications, scheduling, translation and captioning — and wire them into the tools your church already runs.",
     accent: "card-accent-rose",
+    tone: "rose" as const,
   },
   {
     icon: "🌱",
     title: "Training & Governance",
     body: "Role-by-role staff training, an in-house AI champion so you own this after we leave, quarterly tool reviews, and ministry-shaped metrics your board can actually read: hours returned to people-facing work.",
-    accent: "card-accent-gold",
+    accent: "card-accent-sage",
+    tone: "sage" as const,
   },
 ];
 
 const SERVICES = [
   {
     name: "Staff Workshop",
+    icon: "users" as IconName,
     price: "$950",
     priceNote: "flat, up to 25 staff & volunteers",
     tagline: "AI in Ministry: what's safe, what's not",
@@ -122,6 +132,7 @@ const SERVICES = [
   },
   {
     name: "AI Readiness Assessment & Policy",
+    icon: "clipboard-check" as IconName,
     price: "$2,500–$6,000",
     priceNote: "fixed price by congregation size",
     tagline: "The board-ready foundation",
@@ -131,6 +142,7 @@ const SERVICES = [
   },
   {
     name: "Implementation Sprint",
+    icon: "zap" as IconName,
     price: "$5,000–$15,000",
     priceNote: "30–60 days, fixed scope",
     tagline: "From roadmap to running",
@@ -140,6 +152,7 @@ const SERVICES = [
   },
   {
     name: "Fractional AI Director",
+    icon: "compass" as IconName,
     price: "from $750/mo",
     priceNote: "cancel anytime",
     tagline: "A steady hand, ongoing",
@@ -173,21 +186,25 @@ const NEVERS = [
 const PROCESS = [
   {
     step: "1",
+    icon: "message-circle" as IconName,
     title: "Listen",
     body: "A free discovery call. Where is AI already showing up on your team? What worries you? What would an hour returned to ministry be worth?",
   },
   {
     step: "2",
+    icon: "search" as IconName,
     title: "Assess",
     body: "The readiness assessment: tools audited, staff interviewed, risks mapped, policy written, roadmap ranked. Board-ready in about three weeks.",
   },
   {
     step: "3",
+    icon: "sliders" as IconName,
     title: "Implement",
     body: "A fixed-scope sprint stands up the highest-value uses safely, and your team is trained hands-on as we build.",
   },
   {
     step: "4",
+    icon: "heart" as IconName,
     title: "Walk alongside",
     body: "Ongoing office hours and reviews if you want them — or a clean handoff to your in-house champion. Either way, you own it.",
   },
@@ -226,16 +243,16 @@ export default function ConsultingPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-night text-parchment">
+      <section className="heaven-night-shift relative overflow-hidden text-parchment">
         <div aria-hidden className="hero-rays" />
-        <div aria-hidden className="hero-glow hero-glow-gold opacity-60" />
-        <div aria-hidden className="hero-glow hero-glow-sage" />
+        <div aria-hidden className="hero-glow hero-glow-heaven" />
+        <div aria-hidden className="hero-glow hero-glow-gold opacity-50" />
         <div aria-hidden className="hero-glow hero-glow-ember" />
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          {MOTES.map((m) => (
+          {MOTES.map((m, i) => (
             <span
               key={m.left}
-              className="hero-mote"
+              className={`hero-mote ${i % 2 === 0 ? "hero-mote-heaven" : ""}`}
               style={
                 {
                   left: m.left,
@@ -300,15 +317,18 @@ export default function ConsultingPage() {
       </section>
 
       {/* Stats band */}
-      <section className="border-b border-line bg-parchment-deep">
-        <Container className="py-12">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="border-b border-line bg-heaven-pale/35">
+        <Container className="py-14">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {STATS.map((s, i) => (
               <Reveal key={s.label} delay={i * 90} className="text-center">
-                <p className="font-display text-5xl font-semibold text-gold-deep">
-                  <CountUp value={s.value} suffix={s.suffix} duration={1400 + i * 150} />
-                </p>
-                <p className="mx-auto mt-2 max-w-[16rem] text-sm leading-relaxed text-ink-soft">
+                <div className="relative inline-block">
+                  <StatRing value={s.value} suffix={s.suffix} duration={1500 + i * 130} />
+                  <span className="absolute -right-1 -top-1 flex h-9 w-9 items-center justify-center rounded-full border border-heaven-pale bg-white text-heaven-deep shadow-soft">
+                    <Icon name={s.icon} className="h-4 w-4" />
+                  </span>
+                </div>
+                <p className="mx-auto mt-3 max-w-[16rem] text-sm leading-relaxed text-ink-soft">
                   {s.label}
                 </p>
               </Reveal>
@@ -334,8 +354,12 @@ export default function ConsultingPage() {
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {WHY_NOW.map((item, i) => (
               <Reveal key={item.title} delay={i * 110}>
-                <Card className="card-accent card-accent-sage card-lift h-full p-7">
-                  <Medallion icon={item.icon} tone={i === 0 ? "sage" : i === 1 ? "gold" : "rose"} />
+                <Card className="card-accent card-accent-heaven card-lift h-full p-7">
+                  <Medallion
+                    icon={item.icon}
+                    tone={i === 0 ? "heaven" : i === 1 ? "gold" : "sage"}
+                    className={`soft-float ${i === 1 ? "[animation-delay:1.1s]" : i === 2 ? "[animation-delay:2.2s]" : ""}`}
+                  />
                   <h3 className="mt-5 font-display text-2xl font-semibold text-ink">
                     {item.title}
                   </h3>
@@ -360,7 +384,11 @@ export default function ConsultingPage() {
               <Reveal key={p.title} delay={i * 90}>
                 <Card className={`card-accent ${p.accent} card-lift h-full p-7`}>
                   <div className="flex items-start gap-4">
-                    <Medallion icon={p.icon} tone={i % 2 === 0 ? "gold" : "sage"} />
+                    <Medallion
+                      icon={p.icon}
+                      tone={p.tone}
+                      className={`soft-float ${i === 1 ? "[animation-delay:0.9s]" : i === 2 ? "[animation-delay:1.8s]" : i === 3 ? "[animation-delay:2.7s]" : ""}`}
+                    />
                     <div>
                       <h3 className="font-display text-2xl font-semibold text-ink">{p.title}</h3>
                       <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">{p.body}</p>
@@ -389,15 +417,16 @@ export default function ConsultingPage() {
                     s.featured ? "border-gold/50 bg-gold-pale/25 shadow-lift ring-1 ring-gold/20" : ""
                   }`}
                 >
-                  {s.featured ? (
-                    <div className="mb-3">
-                      <Badge tone="gold">Most churches start here</Badge>
-                    </div>
-                  ) : null}
+                  <div className="mb-4 flex items-center justify-between">
+                    <span className="icon-chip inline-flex h-11 w-11 items-center justify-center rounded-xl bg-heaven-pale/60 text-heaven-deep">
+                      <Icon name={s.icon} />
+                    </span>
+                    {s.featured ? <Badge tone="gold">Most churches start here</Badge> : null}
+                  </div>
                   <h3 className="font-display text-[1.55rem] font-semibold leading-tight text-ink">
                     {s.name}
                   </h3>
-                  <p className="mt-1 text-[0.8rem] font-medium uppercase tracking-[0.12em] text-sage">
+                  <p className="mt-1 text-[0.8rem] font-medium uppercase tracking-[0.12em] text-heaven">
                     {s.tagline}
                   </p>
                   <p className="mt-4 font-display text-3xl font-semibold text-gold-deep">
@@ -425,8 +454,8 @@ export default function ConsultingPage() {
           />
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             <Reveal>
-              <Card className="card-accent card-accent-sage card-lift h-full p-7">
-                <Badge tone="sage">Start here</Badge>
+              <Card className="card-accent card-accent-heaven card-lift h-full p-7">
+                <Badge tone="heaven">Start here</Badge>
                 <h3 className="mt-4 font-display text-2xl font-semibold text-ink">
                   High value, low controversy
                 </h3>
@@ -469,7 +498,7 @@ export default function ConsultingPage() {
               </Card>
             </Reveal>
             <Reveal delay={220}>
-              <Card className="card-accent card-accent-rose card-lift h-full bg-night p-7 text-parchment">
+              <Card className="card-accent card-accent-rose card-lift h-full bg-heaven-night p-7 text-parchment">
                 <Badge tone="night">Never</Badge>
                 <h3 className="mt-4 font-display text-2xl font-semibold text-parchment">
                   Lines we help you hold
@@ -504,24 +533,42 @@ export default function ConsultingPage() {
             title="Four steps, no pressure"
             lede="Every engagement starts with listening and ends with your team owning the result."
           />
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {PROCESS.map((p, i) => (
-              <Reveal key={p.title} delay={i * 90}>
-                <Card className="card-lift h-full p-7">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 bg-gold-pale/30 font-display text-xl font-semibold text-gold-deep">
-                    {p.step}
-                  </span>
-                  <h3 className="mt-4 font-display text-2xl font-semibold text-ink">{p.title}</h3>
-                  <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">{p.body}</p>
-                </Card>
-              </Reveal>
-            ))}
+          <div className="relative mt-12">
+            {/* A line draws across the four steps on large screens,
+                visible in the gaps between the cards. */}
+            <Reveal className="pointer-events-none absolute inset-x-10 top-[3.15rem] hidden lg:block">
+              <div className="process-line h-px origin-left bg-gradient-to-r from-heaven/50 via-gold/40 to-heaven/50" />
+            </Reveal>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {PROCESS.map((p, i) => (
+                <Reveal key={p.title} delay={i * 90}>
+                  <Card className="card-lift h-full p-7">
+                    <div className="flex items-center justify-between">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-full border border-heaven/40 bg-heaven-pale/50 font-display text-xl font-semibold text-heaven-deep">
+                        {p.step}
+                      </span>
+                      <Icon name={p.icon} className="icon-chip h-5 w-5 text-heaven/70" />
+                    </div>
+                    <h3 className="mt-4 font-display text-2xl font-semibold text-ink">{p.title}</h3>
+                    <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">{p.body}</p>
+                  </Card>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </Container>
       </section>
 
       {/* Non-denominational + verse */}
-      <section className="bg-parchment-deep">
+      <section className="relative overflow-hidden bg-heaven-pale/35">
+        <Icon
+          name="sparkle"
+          className="soft-float absolute left-[9%] top-14 hidden h-8 w-8 text-heaven/30 md:block"
+        />
+        <Icon
+          name="sparkle"
+          className="soft-float absolute bottom-16 right-[11%] hidden h-6 w-6 text-gold/35 [animation-delay:1.6s] md:block"
+        />
         <Container className="py-20 sm:py-24">
           <VerseBlock
             text="If any of you lacks wisdom, let him ask of God, that giveth to all men liberally, and upbraideth not; and it shall be given him."
@@ -562,7 +609,7 @@ export default function ConsultingPage() {
                   building software for the most tender moments a church family ever walks
                   through — which taught us something most technology companies never learn:
                 </p>
-                <p className="border-l-2 border-gold/50 pl-4 font-display text-xl italic text-ink">
+                <p className="border-l-2 border-heaven/60 pl-4 font-display text-xl italic text-ink">
                   Reverence is a feature. Restraint is a skill.
                 </p>
                 <p>

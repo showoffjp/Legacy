@@ -103,7 +103,7 @@ export function InquiryForm() {
         />
       </Field>
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-        <Button type="submit" variant="dark">
+        <Button type="submit" variant="heaven">
           Compose the email
         </Button>
         <p className="text-xs text-ink-faint">

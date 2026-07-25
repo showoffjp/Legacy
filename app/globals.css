@@ -18,6 +18,12 @@
   --color-night-soft: #202839;
   --color-line: #e2dbca;
 
+  /* Heavenly blues — the consulting practice's key color */
+  --color-heaven: #4a7fb8;
+  --color-heaven-deep: #2f5e93;
+  --color-heaven-pale: #dbe8f6;
+  --color-heaven-night: #142644;
+
   --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
   --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
 
@@ -114,6 +120,181 @@ body {
 .card-accent-rose {
   --accent-grad: linear-gradient(90deg, #9d6b64, #d3a79f);
 }
+.card-accent-heaven {
+  --accent-grad: linear-gradient(90deg, #4a7fb8, #9cc0e8);
+}
+
+/* ————— Heavenly-blue theme for the consulting practice ————— */
+
+/* The page floats on a slowly shifting wash of sky blues and parchment.
+   isolation lets the fixed aurora sit between this background and content. */
+.consulting-theme {
+  isolation: isolate;
+  background: linear-gradient(
+    165deg,
+    #f6fafd 0%,
+    #e7f0fa 20%,
+    #d9e7f5 42%,
+    #ecf3fa 64%,
+    #f3efe4 85%,
+    #f6fafd 100%
+  );
+}
+
+/* Deep heavenly night — hero and footer share the same shifting sky. */
+.heaven-night-shift {
+  background: linear-gradient(
+    135deg,
+    #0e1b33 0%,
+    #16294b 28%,
+    #1e3d6b 52%,
+    #152c50 76%,
+    #0e1b33 100%
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes heaven-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  .consulting-theme {
+    background-size: 220% 220%;
+    animation: heaven-shift 38s ease-in-out infinite;
+  }
+  .heaven-night-shift {
+    background-size: 260% 260%;
+    animation: heaven-shift 26s ease-in-out infinite;
+  }
+}
+
+/* Fixed aurora: soft blue (and one gold) orbs drifting behind all content,
+   giving the page gentle parallax depth as it scrolls past them. */
+.heaven-aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.heaven-aurora span {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(72px);
+  will-change: transform, opacity;
+}
+.heaven-aurora .aurora-1 {
+  width: 58rem;
+  height: 34rem;
+  left: -16rem;
+  top: -8rem;
+  background: radial-gradient(closest-side, rgba(74, 127, 184, 0.2), rgba(74, 127, 184, 0.07) 55%, transparent 78%);
+}
+.heaven-aurora .aurora-2 {
+  width: 48rem;
+  height: 30rem;
+  right: -14rem;
+  top: 32%;
+  background: radial-gradient(closest-side, rgba(126, 169, 220, 0.18), rgba(126, 169, 220, 0.06) 55%, transparent 78%);
+}
+.heaven-aurora .aurora-3 {
+  width: 44rem;
+  height: 28rem;
+  left: 18%;
+  bottom: -12rem;
+  background: radial-gradient(closest-side, rgba(163, 131, 63, 0.12), rgba(163, 131, 63, 0.04) 55%, transparent 78%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .heaven-aurora .aurora-1 {
+    animation: glow-drift-gold 32s ease-in-out infinite alternate;
+  }
+  .heaven-aurora .aurora-2 {
+    animation: glow-drift-sage 40s ease-in-out infinite alternate;
+  }
+  .heaven-aurora .aurora-3 {
+    animation: glow-drift-ember 48s ease-in-out infinite alternate;
+  }
+}
+
+/* Re-tint the shared primitives inside the consulting theme. */
+.consulting-theme ::selection {
+  background: var(--color-heaven-pale);
+  color: var(--color-ink);
+}
+.consulting-theme :focus-visible {
+  outline-color: var(--color-heaven);
+}
+.consulting-theme .ornament {
+  color: var(--color-heaven-deep);
+}
+.consulting-theme .heaven-night-shift .ornament {
+  color: var(--color-heaven-pale);
+}
+.consulting-theme .border-line {
+  border-color: #d5e1f0;
+}
+.consulting-theme .nav-link::after {
+  background: var(--color-heaven);
+}
+.consulting-theme .pill-link {
+  color: var(--color-heaven-deep);
+  background: color-mix(in srgb, var(--color-heaven-pale) 55%, transparent);
+  border-color: color-mix(in srgb, var(--color-heaven) 32%, transparent);
+}
+.consulting-theme .pill-link:hover {
+  background: var(--color-heaven-pale);
+  border-color: var(--color-heaven);
+}
+.consulting-theme :is(input, select, textarea):focus {
+  border-color: var(--color-heaven);
+  box-shadow: 0 0 0 2px var(--color-heaven-pale);
+  outline: none;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .consulting-theme .card-lift:hover {
+    border-color: color-mix(in srgb, var(--color-heaven) 45%, #d5e1f0);
+  }
+}
+
+/* Icon chips tilt playfully when their card lifts. */
+.icon-chip {
+  transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .card-lift:hover .icon-chip {
+    transform: translateY(-3px) rotate(-5deg);
+  }
+}
+
+/* ————— Stat rings: a blue arc draws to each percentage on scroll ————— */
+
+.stat-ring-arc {
+  stroke-dashoffset: var(--ring-target);
+}
+html.motion-ok .stat-ring .stat-ring-arc {
+  stroke-dashoffset: var(--ring-full);
+}
+html.motion-ok .stat-ring.stat-ring-in .stat-ring-arc {
+  stroke-dashoffset: var(--ring-target);
+  transition: stroke-dashoffset 1.7s cubic-bezier(0.22, 0.61, 0.36, 1) 0.15s;
+}
+
+/* ————— Process connector: a line draws across the four steps ————— */
+
+html.motion-ok .reveal .process-line {
+  transform: scaleX(0);
+}
+html.motion-ok .reveal.reveal-in .process-line {
+  transform: scaleX(1);
+  transition: transform 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) 0.35s;
+}
 
 /* ————— Card lift: a gentle rise and deepened shadow on hover ————— */
 
@@ -203,6 +384,9 @@ body {
 }
 .medallion-rose {
   background: linear-gradient(140deg, #f4e3de, #ddb4ab 55%, #c1857b);
+}
+.medallion-heaven {
+  background: linear-gradient(140deg, #e6effb, #b9d1ec 55%, #8fb3da);
 }
 
 /* Pill links inside cards */
@@ -320,6 +504,15 @@ html.motion-ok .reveal.reveal-in .ornament::after {
   opacity: 0.75;
 }
 
+.hero-glow-heaven {
+  width: 62rem;
+  height: 32rem;
+  right: -18rem;
+  top: -10rem;
+  background: radial-gradient(closest-side, rgba(126, 169, 220, 0.42), rgba(126, 169, 220, 0.14) 50%, transparent 78%);
+  opacity: 0.9;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   @keyframes glow-drift-gold {
     0% {
@@ -374,6 +567,9 @@ html.motion-ok .reveal.reveal-in .ornament::after {
   }
   .hero-glow-ember {
     animation: glow-drift-ember 42s ease-in-out infinite alternate;
+  }
+  .hero-glow-heaven {
+    animation: glow-drift-sage 30s ease-in-out infinite alternate;
   }
 
   @keyframes hero-rise {
@@ -456,6 +652,10 @@ html.motion-ok .reveal.reveal-in .ornament::after {
     animation: mote-rise var(--mote-duration, 22s) linear infinite;
     animation-delay: var(--mote-delay, 0s);
     pointer-events: none;
+  }
+
+  .hero-mote-heaven {
+    background: radial-gradient(circle, rgba(219, 232, 246, 0.95), rgba(74, 127, 184, 0.3) 70%, transparent);
   }
 
   /* Gold shimmer that sweeps across the emphasized hero words */

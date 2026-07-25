@@ -26,6 +26,9 @@ const buttonStyles = {
   "outline-inverse":
     "border border-gold-pale/40 bg-white/5 text-parchment hover:border-gold-pale hover:bg-gold-pale/15 hover:text-gold-pale hover:-translate-y-px active:translate-y-0",
   ghost: "text-gold-deep hover:bg-gold-pale/50",
+  /** Heavenly blue — the consulting practice's key color. */
+  heaven:
+    "btn-sheen bg-gradient-to-b from-[#5f92cf] to-[#35618f] text-white shadow-[0_2px_10px_rgba(74,127,184,0.35)] hover:shadow-[0_6px_20px_rgba(74,127,184,0.5)] hover:-translate-y-px active:translate-y-0",
 } as const;
 
 type ButtonVariant = keyof typeof buttonStyles;
@@ -103,7 +106,7 @@ export function Badge({
   tone = "gold",
   children,
 }: {
-  tone?: "gold" | "sage" | "ink" | "night";
+  tone?: "gold" | "sage" | "ink" | "night" | "heaven";
   children: ReactNode;
 }) {
   const tones = {
@@ -111,6 +114,7 @@ export function Badge({
     sage: "bg-sage/15 text-sage",
     ink: "bg-ink/8 text-ink-soft",
     night: "bg-white/10 text-parchment/75",
+    heaven: "bg-heaven-pale/70 text-heaven-deep",
   } as const;
   return (
     <span
@@ -164,7 +168,8 @@ export function Field({
 }
 
 const MEDALLION_TONES = ["gold", "sage", "rose"] as const;
-export type MedallionTone = (typeof MEDALLION_TONES)[number];
+/** "heaven" is opt-in only so medallionTone()'s cycle stays stable elsewhere. */
+export type MedallionTone = (typeof MEDALLION_TONES)[number] | "heaven";
 
 /**
  * A colored medallion behind an icon — dependable warmth even on devices

@@ -57,7 +57,7 @@ export function ConsultingNav() {
   return (
     <header
       className={`no-print sticky top-0 z-50 border-b border-line backdrop-blur transition-all duration-300 ${
-        scrolled ? "bg-parchment/95 shadow-soft" : "bg-parchment/90"
+        scrolled ? "bg-white/85 shadow-soft" : "bg-white/60"
       }`}
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-6 px-5 sm:px-8">
@@ -68,7 +68,7 @@ export function ConsultingNav() {
         >
           <span
             aria-hidden
-            className="translate-y-[1px] text-lg text-sage transition-transform duration-300 group-hover:rotate-45"
+            className="translate-y-[1px] text-lg text-heaven transition-transform duration-300 group-hover:rotate-45"
           >
             ✦
           </span>
@@ -95,7 +95,7 @@ export function ConsultingNav() {
         <div className="flex items-center gap-3">
           <Link
             href="/consulting#contact"
-            className="hidden rounded-full bg-ink px-5 py-2.5 text-[0.83rem] font-medium text-parchment transition-all duration-200 hover:-translate-y-px hover:bg-night hover:shadow-[0_6px_18px_rgba(23,29,43,0.35)] active:translate-y-0 sm:inline-flex"
+            className="hidden rounded-full bg-heaven-deep px-5 py-2.5 text-[0.83rem] font-medium text-white transition-all duration-200 hover:-translate-y-px hover:bg-heaven hover:shadow-[0_6px_18px_rgba(74,127,184,0.4)] active:translate-y-0 sm:inline-flex"
           >
             Book a Discovery Call
           </Link>
@@ -104,7 +104,7 @@ export function ConsultingNav() {
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line text-ink transition-colors hover:border-gold/50 lg:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line text-ink transition-colors hover:border-heaven/50 lg:hidden"
           >
             <span aria-hidden className="text-lg leading-none">
               {open ? "✕" : "☰"}
@@ -114,7 +114,7 @@ export function ConsultingNav() {
       </div>
 
       {open ? (
-        <nav className="step-in border-t border-line bg-parchment px-5 py-4 lg:hidden">
+        <nav className="step-in border-t border-line bg-white/95 px-5 py-4 backdrop-blur lg:hidden">
           <ul className="flex flex-col gap-1">
             {LINKS.map((link) => (
               <li key={link.href}>
@@ -131,7 +131,7 @@ export function ConsultingNav() {
               <Link
                 href="/consulting#contact"
                 onClick={() => setOpen(false)}
-                className="mt-2 block rounded-xl bg-ink px-4 py-3 text-center text-sm font-medium text-parchment"
+                className="mt-2 block rounded-xl bg-heaven-deep px-4 py-3 text-center text-sm font-medium text-white"
               >
                 Book a Discovery Call
               </Link>
