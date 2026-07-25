@@ -87,9 +87,12 @@ export function Card({
   className?: string;
   children: ReactNode;
 }) {
+  // Callers may pass their own bg-* (e.g. bg-night); Tailwind resolves the
+  // clash by stylesheet order, not class order, so the default must step aside.
+  const background = /(?:^|\s)bg-/.test(className) ? "" : "bg-white/80";
   return (
     <div
-      className={`rounded-2xl border border-line bg-white/80 shadow-soft ${className}`}
+      className={`rounded-2xl border border-line ${background} shadow-soft ${className}`.replace(/\s+/g, " ")}
     >
       {children}
     </div>
@@ -100,13 +103,14 @@ export function Badge({
   tone = "gold",
   children,
 }: {
-  tone?: "gold" | "sage" | "ink";
+  tone?: "gold" | "sage" | "ink" | "night";
   children: ReactNode;
 }) {
   const tones = {
     gold: "bg-gold-pale/70 text-gold-deep",
     sage: "bg-sage/15 text-sage",
     ink: "bg-ink/8 text-ink-soft",
+    night: "bg-white/10 text-parchment/75",
   } as const;
   return (
     <span

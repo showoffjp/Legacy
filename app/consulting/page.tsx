@@ -392,7 +392,7 @@ export default function ConsultingPage() {
             </Reveal>
             <Reveal delay={220}>
               <Card className="card-accent card-accent-rose h-full bg-night p-7 text-parchment">
-                <Badge tone="ink">Never</Badge>
+                <Badge tone="night">Never</Badge>
                 <h3 className="mt-4 font-display text-2xl font-semibold text-parchment">
                   Lines we help you hold
                 </h3>
