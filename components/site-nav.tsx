@@ -33,6 +33,9 @@ export function SiteNav() {
       .catch(() => {});
   }, [pathname]);
 
+  // The consulting practice under /consulting wears its own chrome.
+  if (pathname.startsWith("/consulting")) return null;
+
   const accountHref = user
     ? user.role === "coordinator"
       ? "/admin"

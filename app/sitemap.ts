@@ -21,6 +21,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/pricing",
     "/partners",
     "/account",
+    "/consulting",
+    "/consulting/ai-policy-template",
   ].map((path) => ({
     url: `${SITE_URL}${path}`,
     changeFrequency: "weekly" as const,

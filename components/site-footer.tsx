@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui";
 
 const FOOTER_LINKS = [
@@ -39,6 +42,11 @@ const FOOTER_LINKS = [
 ];
 
 export function SiteFooter() {
+  const pathname = usePathname();
+
+  // The consulting practice under /consulting wears its own chrome.
+  if (pathname.startsWith("/consulting")) return null;
+
   return (
     <footer className="no-print mt-24 bg-night text-parchment/80">
       <Container className="py-14">
