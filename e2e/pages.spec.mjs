@@ -18,6 +18,8 @@ const PAGES = [
   ["/pricing", "Clear, honest pricing"],
   ["/partners", "Serve grieving families with us"],
   ["/account", "Kept safe, together"],
+  ["/consulting", "Data Reverence"],
+  ["/consulting/ai-policy-template", "A church AI policy, ready to adapt"],
 ];
 
 const { check, summary } = makeChecker("pages");

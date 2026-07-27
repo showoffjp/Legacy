@@ -206,6 +206,7 @@ moment its keys exist, and reverts to demo/outbox behavior without them:
 | `RESEND_API_KEY` (+ optional `EMAIL_FROM`) | Outbox emails to families and partners are actually delivered via Resend; the console outbox shows sent/failed status. Placeholder `.example.com` addresses stay queued. |
 | `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN` + `TWILIO_FROM` | Outbox SMS (family confirmations) delivered via Twilio. |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL for share links, sitemaps, and Stripe redirect URLs. |
+| `CONSULTING_INQUIRY_EMAIL` | Overrides the inbox that Steward AI consulting inquiries (`/consulting`) are sent to; defaults to the address in `lib/consulting.ts`. |
 
 ## Deploying
 

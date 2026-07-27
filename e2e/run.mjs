@@ -16,6 +16,7 @@ const SPECS = [
   "aftercare.spec.mjs",
   "eulogy.spec.mjs",
   "funding.spec.mjs",
+  "consulting.spec.mjs",
 ];
 
 async function serverUp() {
