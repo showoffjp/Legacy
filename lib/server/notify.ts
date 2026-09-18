@@ -16,7 +16,12 @@ export interface OutgoingMessage {
   recipient: string;
   subject?: string;
   body: string;
-  relatedType?: "coordination" | "order" | "partner-application" | "remembrance";
+  relatedType?:
+    | "coordination"
+    | "order"
+    | "partner-application"
+    | "remembrance"
+    | "consulting-inquiry";
   relatedId?: string;
 }
 

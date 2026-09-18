@@ -195,6 +195,19 @@ const SCHEMA = `
       created_at      TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS consulting_inquiries (
+      id         TEXT PRIMARY KEY,
+      reference  TEXT NOT NULL UNIQUE,
+      name       TEXT NOT NULL,
+      church     TEXT NOT NULL,
+      email      TEXT NOT NULL,
+      size       TEXT NOT NULL DEFAULT '',
+      interest   TEXT NOT NULL DEFAULT '',
+      message    TEXT NOT NULL DEFAULT '',
+      status     TEXT NOT NULL DEFAULT 'received',
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS remembrance_events (
       id             TEXT PRIMARY KEY,
       remembrance_id TEXT NOT NULL REFERENCES remembrances(id) ON DELETE CASCADE,
