@@ -378,7 +378,7 @@ function InquiryCard({ inquiry }: { inquiry: ConsultingInquiryRow }) {
         <p>
           {inquiry.name} ·{" "}
           <a
-            href={`mailto:${inquiry.email}?subject=${encodeURIComponent(
+            href={`mailto:${encodeURIComponent(inquiry.email)}?subject=${encodeURIComponent(
               `Re: your note to Steward AI (${inquiry.reference})`,
             )}`}
             className="text-gold-deep underline decoration-gold-pale underline-offset-4 hover:text-gold"
