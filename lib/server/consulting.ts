@@ -92,3 +92,11 @@ export async function listConsultingInquiries(limit = 100): Promise<ConsultingIn
     [limit],
   );
 }
+
+export const INQUIRY_STATUSES = ["received", "contacted", "scheduled", "won", "closed"] as const;
+
+export async function setInquiryStatus(id: string, status: string): Promise<void> {
+  if (!(INQUIRY_STATUSES as readonly string[]).includes(status)) return;
+  const db = await getDb();
+  await db.run("UPDATE consulting_inquiries SET status = ? WHERE id = ?", [status, id]);
+}
