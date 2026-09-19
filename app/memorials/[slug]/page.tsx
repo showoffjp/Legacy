@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { memorialBySlug } from "@/lib/data/memorials";
 import { hymnById } from "@/lib/data/hymns";
+import { livestreamEmbedUrl } from "@/lib/livestream";
 import type { Hymn, Memorial } from "@/lib/types";
 import {
+  currentSlugForFormer,
   getPublishedMemorial,
   giftSummary,
   listCondolences,
@@ -230,6 +232,8 @@ async function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial
     serves: m.serves,
   }));
   const gifts = await giftSummary(memorial.slug);
+  const liveEmbed = service?.livestream ? livestreamEmbedUrl(service.livestreamUrl) : null;
+  const recordingEmbed = livestreamEmbedUrl(d.recordingUrl);
 
   return (
     <>
@@ -323,6 +327,17 @@ async function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial
                   </div>
                 ) : null}
               </dl>
+              {liveEmbed ? (
+                <div className="mt-6">
+                  <iframe
+                    src={liveEmbed}
+                    title="Livestream of the service"
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    allowFullScreen
+                    className="aspect-video w-full rounded-2xl border border-line bg-ink/5"
+                  />
+                </div>
+              ) : null}
               {service.date ? (
                 <p className="mt-6 text-center">
                   <a
@@ -340,6 +355,36 @@ async function PublishedMemorialView({ memorial }: { memorial: PublishedMemorial
                 <RsvpForm slug={memorial.slug} />
               </div>
             </Card>
+          </section>
+        ) : null}
+
+        {d.recordingUrl ? (
+          <section aria-label="Recording of the service">
+            <SectionHeading
+              eyebrow="For those who could not be there"
+              title="The Service, Held Again"
+            />
+            <div className="mx-auto mt-10 max-w-3xl">
+              {recordingEmbed ? (
+                <iframe
+                  src={recordingEmbed}
+                  title="Recording of the service"
+                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                  allowFullScreen
+                  className="aspect-video w-full rounded-2xl border border-line bg-ink/5"
+                />
+              ) : null}
+              <p className="mt-4 text-center">
+                <a
+                  href={d.recordingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-gold-deep underline-offset-2 hover:underline"
+                >
+                  🎞 Watch the service again
+                </a>
+              </p>
+            </div>
           </section>
         ) : null}
 
@@ -387,6 +432,9 @@ export default async function MemorialDetailPage({ params }: PageProps) {
   const sample = memorialBySlug(slug);
   const published = sample ? null : await getPublishedMemorial(slug);
   if (!sample && !published) {
+    // The family may have chosen a new address — links shared earlier follow it.
+    const moved = await currentSlugForFormer(slug);
+    if (moved) redirect(`/memorials/${moved}`);
     notFound();
   }
 

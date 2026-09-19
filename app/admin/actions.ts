@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/server/auth";
+import { findUserByEmail, getCurrentUser } from "@/lib/server/auth";
 import { setCoordinationStatus } from "@/lib/server/coordination";
 import { setApplicationStatus } from "@/lib/server/partners";
 import { setAssignmentStatus } from "@/lib/server/payments";
-import { unpublishMemorial } from "@/lib/server/memorials";
+import { assignMemorialOwner, unpublishMemorial } from "@/lib/server/memorials";
 import { invitePartner, type PartnerKind } from "@/lib/server/portal";
 
 async function requireCoordinator(): Promise<boolean> {
@@ -60,6 +60,29 @@ export async function invitePartnerAction(
   const result = await invitePartner({ kind: kind as PartnerKind, refId, email, contactName });
   if (result.ok) revalidatePath("/admin");
   return { ok: result.ok, error: result.error ?? "" };
+}
+
+/** Connect a memorial published without an account to the family's account. */
+export async function assignMemorialOwnerAction(
+  _prev: InviteFormState,
+  formData: FormData,
+): Promise<InviteFormState> {
+  if (!(await requireCoordinator())) return { ok: false, error: "Please sign in." };
+  const slug = String(formData.get("slug") ?? "");
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!slug || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "Enter the family account's email address." };
+  }
+  const user = await findUserByEmail(email);
+  if (!user) {
+    return { ok: false, error: "No account with that email — ask the family to sign up first." };
+  }
+  if (!(await assignMemorialOwner(slug, user.id))) {
+    return { ok: false, error: "This memorial could not be connected." };
+  }
+  revalidatePath("/admin");
+  revalidatePath("/account/dashboard");
+  return { ok: true, error: "" };
 }
 
 export async function unpublishMemorialAction(formData: FormData): Promise<void> {

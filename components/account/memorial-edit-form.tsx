@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
+  renameMemorialAction,
   updateMemorialAction,
   unpublishOwnMemorialAction,
   type EditMemorialState,
@@ -46,6 +47,46 @@ async function fileToGalleryDataUrl(file: File): Promise<string> {
   if (!ctx) return dataUrl;
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   return canvas.toDataURL("image/jpeg", 0.78);
+}
+
+/** Choosing the page's address is deliberate — its own form, its own save. */
+function AddressForm({ slug }: { slug: string }) {
+  const [state, formAction] = useActionState<EditMemorialState, FormData>(renameMemorialAction, {
+    ok: false,
+    error: "",
+  });
+  return (
+    <form action={formAction} className="border-t border-line pt-6">
+      <input type="hidden" name="slug" value={slug} />
+      <h2 className="font-display text-lg font-semibold text-ink">The page&apos;s address</h2>
+      <p className="mt-1 text-sm text-ink-soft">
+        Choose something easy to say aloud at the service. Links you have already shared keep
+        working — they follow the page to its new address.
+      </p>
+      {state.error ? (
+        <p role="alert" className="mt-3 text-sm text-red-700">
+          {state.error}
+        </p>
+      ) : null}
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <span className="text-sm text-ink-faint">/memorials/</span>
+        <input
+          name="newSlug"
+          defaultValue={slug}
+          aria-label="Page address"
+          pattern="[A-Za-z0-9\-]{3,60}"
+          title="Letters, numbers, and hyphens — at least three characters."
+          className={`${inputCls} max-w-xs`}
+        />
+        <button
+          type="submit"
+          className="rounded-full border border-line bg-white px-6 py-2.5 text-sm font-medium text-ink transition-colors hover:border-gold hover:text-gold-deep"
+        >
+          Change the address
+        </button>
+      </div>
+    </form>
+  );
 }
 
 export function MemorialEditForm({ memorial }: { memorial: PublishedMemorial }) {
@@ -172,7 +213,7 @@ export function MemorialEditForm({ memorial }: { memorial: PublishedMemorial }) 
           <div className="mt-3">
             <Field
               label="Livestream link (optional)"
-              hint="Shown as a “Join the service online” button on the page."
+              hint="YouTube and Vimeo links play right on the page; other links appear as a “Join the service online” button."
             >
               <input
                 name="livestreamUrl"
@@ -180,6 +221,21 @@ export function MemorialEditForm({ memorial }: { memorial: PublishedMemorial }) 
                 inputMode="url"
                 defaultValue={d.service?.livestreamUrl ?? ""}
                 placeholder="https://youtube.com/live/…"
+                className={inputCls}
+              />
+            </Field>
+          </div>
+          <div className="mt-3">
+            <Field
+              label="Recording of the service (optional)"
+              hint="Added after the day — the page gains a “service, held again” section for those who could not be there."
+            >
+              <input
+                name="recordingUrl"
+                type="url"
+                inputMode="url"
+                defaultValue={d.recordingUrl ?? ""}
+                placeholder="https://youtube.com/watch?v=…"
                 className={inputCls}
               />
             </Field>
@@ -263,6 +319,8 @@ export function MemorialEditForm({ memorial }: { memorial: PublishedMemorial }) 
 
         <SaveButton />
       </form>
+
+      <AddressForm slug={memorial.slug} />
 
       <form
         action={unpublishOwnMemorialAction}
