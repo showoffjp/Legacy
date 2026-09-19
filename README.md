@@ -118,7 +118,12 @@ network; onboarding below is real.)
   and inline status updates that appear on the family's dashboard the moment they are made.
 - **Memorial management** (`/account/memorials/<slug>`) — owners edit their published memorial's
   story, nickname, community, and service details; choose **public or link-only** privacy
-  (link-only pages stay reachable but unlisted); or unpublish — every record kept.
+  (link-only pages stay reachable but unlisted); or unpublish — every record kept. Owners also
+  choose **the page's address** (`/memorials/vera-caldwell-homegoing`) — the guestbook, RSVPs,
+  promised dishes, and gifts travel with it, and links shared before the change keep resolving.
+  YouTube and Vimeo **livestream links play embedded** on the page, and a **recording added
+  after the day** gives the page a "service, held again" section. Pages published without an
+  account can be **connected to the family** from the coordinator console.
 - **Checkout** (`/pricing` → `/checkout`) — three transparent packages and à la carte services
   behind a pluggable `PaymentProvider` (the included demo provider completes without charging;
   Stripe implements the same interface).
@@ -258,31 +263,16 @@ on first touch.
   data URLs.
 - **Family collaboration** — multiple plans per account, inviting co-planners (siblings sharing
   the load), roles and gentle change history.
-- **Memorial management** — editing after publishing, custom slugs, privacy levels
-  (public / link-only), and ownership claims.
+- **Memorial management, deepened** — editing, custom addresses (links shared earlier keep
+  resolving), privacy levels, and console ownership claims all ship today; next:
+  family-initiated claims with email verification.
 
 ### Deepening the ministry (mid term)
 
 - **Memorial gifts** — "in lieu of flowers" donations to a ministry or charity, receipted, with
   totals shared gently with the family.
-- **Livestream, embedded** — the "Join the service online" link is live today; next, the stream
-  player and its recording living on the memorial page afterward.
-- **Higher-fidelity tribute films** — optional server-side rendering to MP4/1080p with more
-  motion styles, licensed hymn recordings, and voice-over recording.
-- **Writing help, deepened** — the interview-woven eulogy studio ships today (`/plan/eulogy`);
-  next: optional AI assistance for the obituary and eulogy, always in the family's voice and
-  always theirs to edit.
-- **The grief year, deepened** — the milestone notes ship today (`/aftercare`); next: prompts
-  for the family to gather, and integration with GriefShare group finders.
-- **Church partnership portal** — congregations connect their sanctuary calendar, choir and AV
-  teams, and repast hall so booking a church service is one coordinated step.
-- **Veteran honors, completed** — branch intake, program honors, and partner notification ship
-  today; next: DD-214 document intake, flag and honor-guard scheduling, VA claim filing help.
-- **Monuments** — a headstone designer with engraving preview and cemetery-regulation checks.
-- **The estate vault** — the executor checklist and generated account-closure letters ship today
-  (`/aftercare`); next: a secure document vault for the will, deeds, and certificates.
-- **Español primero** — full Spanish localization (bilingual services are already in the data
-  model), then other languages.
+- **Livestream, deepened** — YouTube and Vimeo streams and recordings play embedded on the
+  memorial page today; next: other hosts, and the recording archived with the page.
 
 ### The full vision (long term)
 

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/server/auth";
 import {
+  renameMemorialByOwner,
   sanitizeLivestreamUrl,
   unpublishMemorialByOwner,
   updateMemorialByOwner,
@@ -45,6 +46,7 @@ export async function updateMemorialAction(
     nickname: String(formData.get("nickname") ?? "").trim(),
     locationText: String(formData.get("locationText") ?? "").trim(),
     giftsNote: String(formData.get("giftsNote") ?? "").trim(),
+    recordingUrl: sanitizeLivestreamUrl(formData.get("recordingUrl")),
     photos: (() => {
       try {
         return JSON.parse(String(formData.get("photos") ?? "[]")) as string[];
@@ -62,6 +64,26 @@ export async function updateMemorialAction(
   revalidatePath(`/memorials/${slug}`);
   revalidatePath("/memorials");
   revalidatePath("/account/dashboard");
+  return { ok: true, error: "" };
+}
+
+/** Give the page a chosen address; links shared earlier keep resolving. */
+export async function renameMemorialAction(
+  _prev: EditMemorialState,
+  formData: FormData,
+): Promise<EditMemorialState> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "Please sign in." };
+
+  const slug = String(formData.get("slug") ?? "");
+  const requested = String(formData.get("newSlug") ?? "");
+  const result = await renameMemorialByOwner(slug, user.id, requested);
+  if (!result.ok || !result.slug) {
+    return { ok: false, error: result.error ?? "The address could not be changed." };
+  }
+  revalidatePath("/memorials");
+  revalidatePath("/account/dashboard");
+  if (result.slug !== slug) redirect(`/account/memorials/${result.slug}`);
   return { ok: true, error: "" };
 }
 

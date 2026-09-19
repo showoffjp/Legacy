@@ -24,6 +24,10 @@ export interface PublishedMemorialData {
   giftsNote?: string;
   /** Gallery photographs (downscaled data URLs, capped). */
   photos?: string[];
+  /** A recording of the service, added after the day (http/https only). */
+  recordingUrl?: string;
+  /** Addresses this page used to live at — links shared earlier still resolve. */
+  formerSlugs?: string[];
   service: {
     kind: string;
     date: string;
@@ -205,13 +209,20 @@ export async function listPublishedMemorials(limit = 50): Promise<PublishedMemor
 }
 
 /** Every published memorial regardless of privacy — for the coordinator console. */
-export async function listAllPublishedMemorials(limit = 100): Promise<PublishedMemorial[]> {
+export async function listAllPublishedMemorials(
+  limit = 100,
+): Promise<(PublishedMemorial & { ownerEmail: string | null })[]> {
   const db = await getDb();
-  const rows = await db.all<MemorialRow>(
-    "SELECT * FROM memorials WHERE published = 1 ORDER BY created_at DESC LIMIT ?",
+  const rows = await db.all<MemorialRow & { owner_email: string | null }>(
+    `SELECT m.*, u.email AS owner_email FROM memorials m
+     LEFT JOIN users u ON u.id = m.owner_id
+     WHERE m.published = 1 ORDER BY m.created_at DESC LIMIT ?`,
     [limit],
   );
-  return rows.map(rowToMemorial).filter((m): m is PublishedMemorial => m !== null);
+  return rows.flatMap((row) => {
+    const memorial = rowToMemorial(row);
+    return memorial ? [{ ...memorial, ownerEmail: row.owner_email ?? null }] : [];
+  });
 }
 
 export async function listMemorialsForOwner(ownerId: string): Promise<PublishedMemorial[]> {
@@ -251,6 +262,7 @@ export interface OwnerMemorialPatch {
   locationText?: string;
   giftsNote?: string;
   photos?: string[];
+  recordingUrl?: string;
   service?: PublishedMemorialData["service"];
   privacy?: MemorialPrivacy;
 }
@@ -285,6 +297,9 @@ export async function updateMemorialByOwner(
     ...(patch.locationText !== undefined ? { locationText: patch.locationText } : null),
     ...(patch.giftsNote !== undefined ? { giftsNote: patch.giftsNote } : null),
     ...(patch.photos !== undefined ? { photos: sanitizeGalleryPhotos(patch.photos) } : null),
+    ...(patch.recordingUrl !== undefined
+      ? { recordingUrl: sanitizeLivestreamUrl(patch.recordingUrl) }
+      : null),
     ...(patch.service !== undefined ? { service: patch.service } : null),
   };
   const db = await getDb();
@@ -302,6 +317,109 @@ export async function unpublishMemorialByOwner(slug: string, ownerId: string): P
   if (!memorial) return false;
   await unpublishMemorial(slug);
   return true;
+}
+
+/* ——— The page's address ——— */
+
+const MEMORIAL_CHILD_TABLES = ["condolences", "rsvps", "meal_offers", "gift_pledges"] as const;
+const TAKEN = "That address is already in use — try another.";
+
+/** Normalize a requested address into slug form; empty when unusable. */
+export function normalizeSlug(requested: string): string {
+  return requested
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+/**
+ * Give a memorial a chosen address. The guestbook, RSVPs, meals, and gifts
+ * travel with it, and the old address keeps resolving (via formerSlugs) so
+ * links the family already shared are never broken.
+ *
+ * Children reference memorials(slug), so the move is copy → repoint → remove
+ * rather than an in-place update. The pooled Postgres driver cannot hold a
+ * transaction across calls, so instead the move is resumable: a half-finished
+ * move is recognised by its formerSlugs trail and carried to completion.
+ */
+export async function renameMemorialByOwner(
+  slug: string,
+  ownerId: string,
+  requested: string,
+): Promise<{ ok: boolean; slug?: string; error?: string }> {
+  const next = normalizeSlug(requested);
+  if (next.length < 3) {
+    return { ok: false, error: "Choose an address of at least three letters or numbers." };
+  }
+  if (next === slug) return { ok: true, slug };
+
+  const memorial = await getMemorialForOwner(slug, ownerId);
+  if (!memorial) return { ok: false, error: "This memorial could not be found." };
+
+  const db = await getDb();
+  const row = await db.get<MemorialRow>("SELECT * FROM memorials WHERE slug = ?", [slug]);
+  if (!row) return { ok: false, error: "This memorial could not be found." };
+
+  const existing = await db.get<MemorialRow>("SELECT * FROM memorials WHERE slug = ?", [next]);
+  if (existing) {
+    // Only this memorial's own interrupted move may be finished here.
+    const partial = rowToMemorial(existing);
+    const resumable =
+      existing.owner_id === ownerId && (partial?.data.formerSlugs ?? []).includes(slug);
+    if (!resumable) return { ok: false, error: TAKEN };
+  } else {
+    if (await slugTaken(next)) return { ok: false, error: TAKEN };
+    const data: PublishedMemorialData = {
+      ...memorial.data,
+      formerSlugs: [...(memorial.data.formerSlugs ?? []), slug].slice(-10),
+    };
+    await db.run(
+      "INSERT INTO memorials (slug, owner_id, data, published, privacy, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [
+        next,
+        row.owner_id,
+        JSON.stringify(data),
+        row.published,
+        row.privacy,
+        row.created_at,
+        nowIso(),
+      ],
+    );
+  }
+  for (const table of MEMORIAL_CHILD_TABLES) {
+    await db.run(`UPDATE ${table} SET memorial_slug = ? WHERE memorial_slug = ?`, [next, slug]);
+  }
+  await db.run("DELETE FROM memorials WHERE slug = ?", [slug]);
+  return { ok: true, slug: next };
+}
+
+/** Where a formerly-used address lives now, if anywhere. */
+export async function currentSlugForFormer(slug: string): Promise<string | null> {
+  const db = await getDb();
+  const rows = await db.all<MemorialRow>(
+    "SELECT * FROM memorials WHERE published = 1 AND data LIKE ?",
+    ["%\"formerSlugs\"%"],
+  );
+  for (const row of rows) {
+    const memorial = rowToMemorial(row);
+    if (memorial?.data.formerSlugs?.includes(slug)) return memorial.slug;
+  }
+  return null;
+}
+
+/* ——— Ownership claims ——— */
+
+/** Connect a memorial to a family account so they can manage it. */
+export async function assignMemorialOwner(slug: string, ownerId: string): Promise<boolean> {
+  const db = await getDb();
+  const result = await db.run(
+    "UPDATE memorials SET owner_id = ?, updated_at = ? WHERE slug = ? AND published = 1",
+    [ownerId, nowIso(), slug],
+  );
+  return result.changes > 0;
 }
 
 /* ——— Condolences ——— */

@@ -18,6 +18,7 @@ import {
 import { listPortalAccounts } from "@/lib/server/portal";
 import { listRequestMessages, type RequestMessageRow } from "@/lib/server/messaging";
 import { RequestThread } from "@/components/request-thread";
+import { ConnectFamilyForm } from "@/components/admin/connect-family-form";
 import { InvitePartnerForm } from "@/components/admin/invite-partner-form";
 import { FUNERAL_HOMES } from "@/lib/data/funeral-homes";
 import { CLERGY } from "@/lib/data/clergy";
@@ -675,6 +676,13 @@ export default async function AdminPage() {
                       </Button>
                     </form>
                   </div>
+                  {memorial.ownerEmail ? (
+                    <p className="mt-3 text-xs text-ink-faint">
+                      Managed by the family at {memorial.ownerEmail}
+                    </p>
+                  ) : (
+                    <ConnectFamilyForm slug={memorial.slug} />
+                  )}
                 </Card>
               );
             })
