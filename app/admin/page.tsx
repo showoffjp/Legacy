@@ -6,6 +6,7 @@ import {
   unpublishMemorialAction,
   updateApplicationStatus,
   updateAssignmentStatus,
+  updateInquiryStatus,
   updateRequestStatus,
 } from "@/app/admin/actions";
 import {
@@ -30,6 +31,11 @@ import {
   type CoordinationRequestRow,
 } from "@/lib/server/coordination";
 import { listMessages, type MessageRow } from "@/lib/server/notify";
+import {
+  INQUIRY_STATUSES,
+  listConsultingInquiries,
+  type ConsultingInquiryRow,
+} from "@/lib/server/consulting";
 import {
   listPartnerApplications,
   type PartnerApplicationRow,
@@ -66,6 +72,10 @@ const STATUS_TONES: Record<string, BadgeTone> = {
   pending: "ink",
   paid: "sage",
   queued: "gold",
+  contacted: "ink",
+  scheduled: "ink",
+  won: "sage",
+  closed: "ink",
 };
 
 function toneFor(status: string): BadgeTone {
@@ -93,8 +103,9 @@ function formatTimestamp(iso: string): string {
   });
 }
 
-function pluralize(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+function pluralize(count: number, noun: string, plural?: string): string {
+  if (count === 1) return `${count} ${noun}`;
+  return `${count} ${plural ?? `${noun}s`}`;
 }
 
 function parsePlan(json: string): Partial<ServicePlan> {
@@ -349,6 +360,52 @@ function ApplicationCard({ application }: { application: PartnerApplicationRow }
   );
 }
 
+/* ——— Steward AI inquiries ——— */
+
+function InquiryCard({ inquiry }: { inquiry: ConsultingInquiryRow }) {
+  return (
+    <Card className="p-6 sm:p-8">
+      <div className="flex flex-wrap items-center gap-3">
+        <h3 className="font-display text-xl font-medium text-ink">{inquiry.church}</h3>
+        <Badge tone="ink">{inquiry.reference}</Badge>
+        <Badge tone={toneFor(inquiry.status)}>{humanize(inquiry.status)}</Badge>
+        <span className="ml-auto text-xs text-ink-faint">
+          Asked {formatTimestamp(inquiry.created_at)}
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-1 text-sm text-ink-soft">
+        <p>
+          {inquiry.name} ·{" "}
+          <a
+            href={`mailto:${encodeURIComponent(inquiry.email)}?subject=${encodeURIComponent(
+              `Re: your note to Steward AI (${inquiry.reference})`,
+            )}`}
+            className="text-gold-deep underline decoration-gold-pale underline-offset-4 hover:text-gold"
+          >
+            {inquiry.email}
+          </a>
+        </p>
+        {inquiry.size ? <p>{inquiry.size}</p> : null}
+        {inquiry.interest ? <p>Exploring: {inquiry.interest}</p> : null}
+      </div>
+
+      {inquiry.message ? (
+        <p className="mt-4 rounded-xl bg-parchment-deep/50 px-4 py-3 text-sm leading-relaxed text-ink-soft">
+          {inquiry.message}
+        </p>
+      ) : null}
+
+      <StatusForm
+        action={updateInquiryStatus}
+        id={inquiry.id}
+        current={inquiry.status}
+        statuses={INQUIRY_STATUSES}
+      />
+    </Card>
+  );
+}
+
 /* ——— Orders ——— */
 
 function OrderCard({ order }: { order: OrderRow }) {
@@ -454,6 +511,7 @@ export default async function AdminPage() {
   const applications = await listPartnerApplications();
   const orders = await listOrders();
   const messages = await listMessages();
+  const inquiries = await listConsultingInquiries();
   const memorials = await listAllPublishedMemorials();
   const portalAccounts = await listPortalAccounts();
   const requestThreads = await Promise.all(
@@ -529,6 +587,21 @@ export default async function AdminPage() {
             applications.map((application) => (
               <ApplicationCard key={application.id} application={application} />
             ))
+          )}
+        </ConsoleSection>
+
+        <ConsoleSection
+          title="Steward AI inquiries"
+          count={pluralize(inquiries.length, "inquiry", "inquiries")}
+          note="Churches asking about the AI consulting practice. Each one already received an acknowledgment; these are the notes behind them."
+        >
+          {inquiries.length === 0 ? (
+            <EmptyState>
+              No inquiries yet. When a church asks for a discovery call, their note will
+              appear here with a reply link.
+            </EmptyState>
+          ) : (
+            inquiries.map((inquiry) => <InquiryCard key={inquiry.id} inquiry={inquiry} />)
           )}
         </ConsoleSection>
 
